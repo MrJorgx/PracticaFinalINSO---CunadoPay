@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="controllers.MainController">
+    <top>
+        <Label text="Bienvenido a CuñadoPay - Gestión de Inventarios" />
+    </top>
+    <center>
+        <Button text="Gestión de Inventario" onAction="#goToInventory" />
+    </center>
+</BorderPane>

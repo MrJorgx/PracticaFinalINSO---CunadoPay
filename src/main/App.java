@@ -1,3 +1,5 @@
+//Clase para cargar la interfaz
+
 package main;
 
 import javafx.application.Application;
