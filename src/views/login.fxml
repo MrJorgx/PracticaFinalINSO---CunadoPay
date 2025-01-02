@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" spacing="10" alignment="CENTER">
+    <children>
+        <Label text="Inicio de sesión" style="-fx-font-size: 24px;"/>
+        <GridPane hgap="10" vgap="10">
+            <children>
+                <Label text="Usuario: " GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                <TextField fx:id="usernameField" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                <Label text="Contraseña: " GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                <PasswordField fx:id="passwordField" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+            </children>
+        </GridPane>
+        <Hbox spacing="10" alignment="CENTER">
+            <children>
+                <Button text="Iniciar sesión" fx:id="loginButton"/>
+                <Button text="Cancelar" fx:id="cancelButton"/>
+            </children>
+        </HBox>
+    </children>
+</VBox>
