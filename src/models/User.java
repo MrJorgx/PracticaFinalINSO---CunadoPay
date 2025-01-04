@@ -7,7 +7,6 @@ public class User {
     private int id;
 
     public User(int tipo, String name, int id) {
-
         this.tipo = tipo;
         this.name = name;
         this.id = id;
@@ -36,15 +35,11 @@ public class User {
     public void setId(int id) {
         this.id = id;
     }
-    // public boolean isJefe() {
-    //     return this.tipo==1;
-    // }
-
-    // public boolean isEmpleado() {
-    //     return this.tipo==2;
-    // }
-
-    public String toString() {
-        return name + "-" + id;
+    public boolean isJefe() {
+        return this.tipo==1;
     }
+    public boolean isEmpleado() {
+         return this.tipo==2;
+    }
+
 }

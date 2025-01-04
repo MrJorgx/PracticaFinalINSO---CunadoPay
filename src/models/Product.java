@@ -6,17 +6,19 @@ public class Product {
     private String name;
     private int stock;
     private float price;
+    private String URL;
 
-    public Product(int id, String name, int stock, float price) {
+    public Product(int id, String name, int stock, float price, String URL) {
 
         this.id = id;
         this.name = name;
         this.stock = stock;
         this.price = price;
+        this.URL=  url;
     }
 
     public int getId() {
-        return id;
+        return this.id;
     }
 
     public void setId(int id) {
@@ -24,7 +26,7 @@ public class Product {
     }
 
     public String getName() {
-        return name;
+        return this.name;
     }
 
     public void setName(String name) {
@@ -32,7 +34,7 @@ public class Product {
     }
 
     public int getStock() {
-        return stock;
+        return this.stock;
     }
 
     public void setStock(int stock) {
@@ -40,16 +42,19 @@ public class Product {
     }
 
     public float getPrice() {
-        return price;
+        return this.price;
     }
 
     public void setPrice(float price) {
         this.price = price;
     }
-
-    public String getNombre() {
-        return this.name;
+    public void setURL(String URL) {
+        this.URL = URL;
     }
+    public String getURL() {
+            return this.URL;
+    }
+
 
     @Override
     public String toString() {
