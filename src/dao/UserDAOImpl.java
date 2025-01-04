@@ -42,7 +42,7 @@ public class UserDAOImpl implements UserDao {
                 }
             }
         }
-        return imprimir
+        return imprimir;
     }
 
     public List<User> findAll() {

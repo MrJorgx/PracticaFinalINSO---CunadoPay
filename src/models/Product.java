@@ -10,39 +10,51 @@ public class Product {
 
     public Product(int id, String name, int stock, float price, String URL) {
 
+        if(price<0 || stock<0) {
+            throw new IllegalArgumentException("El precio o la cantidad no pueden ser menores que 0.");
+        }
+
         this.id = id;
         this.name = name;
         this.stock = stock;
         this.price = price;
-        this.URL=  url;
+        this.URL = URL;
     }
 
+    // GETTERS
     public int getId() {
         return this.id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
     }
 
     public String getName() {
         return this.name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public int getStock() {
         return this.stock;
     }
 
-    public void setStock(int stock) {
-        this.stock = stock;
-    }
-
     public float getPrice() {
         return this.price;
+    }
+
+    public String getURL() {
+        return this.URL;
+    }
+
+
+    // SETTERS
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setStock(int stock) {
+        this.stock = stock;
     }
 
     public void setPrice(float price) {
@@ -50,9 +62,6 @@ public class Product {
     }
     public void setURL(String URL) {
         this.URL = URL;
-    }
-    public String getURL() {
-            return this.URL;
     }
 
 

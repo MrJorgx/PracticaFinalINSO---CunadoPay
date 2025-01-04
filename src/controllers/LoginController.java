@@ -1,5 +1,6 @@
 package controllers;
 
+import javax.swing.*;
 public class LoginController {
 
     public boolean login(String username, String password) {

@@ -5,7 +5,7 @@ public class Jefe extends User{
 
     public Jefe(String name, int id, String  password) {
         super(1, name, id);
-        this.password=password
+        this.password=password;
     }
     public void setPassword(String password){
         this.password=password;
@@ -17,6 +17,6 @@ public class Jefe extends User{
         return this.password.equals(password);
     }
     public String toString(){
-        return "Jefe: "+ getName()", ID: "+getId();
+        return "Jefe: "+ getName() + ", ID: " + getId();
     }
 }
