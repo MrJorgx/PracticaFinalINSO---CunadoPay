@@ -1,61 +1,38 @@
-// Configuración inicial de la base de datos
 package database;
-/*/
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+import io.github.cdimascio.dotenv.Dotenv;
 
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoDatabase;
-
-public class ConexionMongoDBAtlas {
+public class DatabaseController {
     public static void main(String[] args) {
-        String uri = "mongodb+srv://<db_username>:<db_password>@cunadopay.bbnff.mongodb.net/";
+        Dotenv dotenv = Dotenv.load();
 
-        try (MongoClient mongoClient = MongoClients.create(uri)) {
-            // Conectar a la base de datos
-            MongoDatabase database = mongoClient.getDatabase("nombre_base_datos");
-            System.out.println("Conexión exitosa a MongoDB Atlas");
+        String dbUrl = dotenv.get("DB_URL");
+        String dbUser = dotenv.get("DB_USER");
+        String dbPassword = dotenv.get("DB_PASSWORD");
 
-            // Probar el acceso
-            System.out.println("Colecciones disponibles: " + database.listCollectionNames());
-        } catch (Exception e) {
-            System.err.println("Error conectando a MongoDB Atlas: " + e.getMessage());
-        }
-    }
-}/*/
+        Connection connection = null;
+        Statement statement = null;
 
+        try {
+            connection = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
+            statement = connection.createStatement();
+            statement.executeQuery("SELECT 1");
+            System.out.println("Pinged your deployment. You successfully connected to PostgreSQL!");
 
-import com.mongodb.ConnectionString;
-import com.mongodb.MongoClientSettings;
-import com.mongodb.MongoException;
-import com.mongodb.ServerApi;
-import com.mongodb.ServerApiVersion;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoDatabase;
-import org.bson.Document;
+            // Aquí puedes agregar cualquier operación que quieras realizar en la base de datos
 
-public class MongoClientConnectionExample {
-    public static void main(String[] args) {
-        String connectionString = "mongodb+srv://insoFinal:inso2024@cunadopay.bbnff.mongodb.net/?retryWrites=true&w=majority&appName=CunadoPay";
-
-        ServerApi serverApi = ServerApi.builder()
-                .version(ServerApiVersion.V1)
-                .build();
-
-        MongoClientSettings settings = MongoClientSettings.builder()
-                .applyConnectionString(new ConnectionString(connectionString))
-                .serverApi(serverApi)
-                .build();
-
-        // Create a new client and connect to the server
-        try (MongoClient mongoClient = MongoClients.create(settings)) {
+        } catch (SQLException e) {
+            System.err.println("Error al conectar con la base de datos: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
             try {
-                // Send a ping to confirm a successful connection
-                MongoDatabase database = mongoClient.getDatabase("admin");
-                database.runCommand(new Document("ping", 1));
-                System.out.println("Pinged your deployment. You successfully connected to MongoDB!");
-            } catch (MongoException e) {
+                if (statement != null) statement.close();
+                if (connection != null) connection.close();
+            } catch (SQLException e) {
                 e.printStackTrace();
             }
         }

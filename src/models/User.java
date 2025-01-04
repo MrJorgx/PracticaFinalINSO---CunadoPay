@@ -12,29 +12,37 @@ public class User {
         this.id = id;
     }
 
+
+    // GETTERS
     public int getTipo() {
         return tipo;
-    }
-
-    public void setTipo(int tipo) {
-        this.tipo = tipo;
     }
 
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public int getId() {
         return id;
+    }
+
+
+    // SETTERS
+
+    public void setTipo(int tipo) {
+        this.tipo = tipo;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public void setId(int id) {
         this.id = id;
     }
+
+
+    
     public boolean isJefe() {
         return this.tipo==1;
     }

@@ -1,15 +1,15 @@
 package dao;
 
-import model.Product;
+import model.ProductVO;
 import java.util.List;
-public class ProductDAO {
-    String save(Product product);
-    Product findById(int id);
-    List<Product> findByName(String name);
-    Product findByURL(String URL);
-    List<Product> findAll();
-    
 
-    void update(Product product,int id, String name, int stock, float price, String URL);
+public class ProductDAO {
+    
+    ProductVO getProductById(int id);
+    Product findByURL(String URL);
+    List<ProductVO> getAllProducts();
+
+    void add(ProductVO product);
+    void update(ProductVO product);
     void delete(int id);
 }
