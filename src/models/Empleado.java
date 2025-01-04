@@ -6,6 +6,6 @@ public class Empleado extends User{
         super(2,name, id);
     }
     public String toString(){
-        return "Empleado: "+ getName()", ID: "+getId();
+        return "Empleado: "+ getName() + ", ID: " + getId();
     }
 }
