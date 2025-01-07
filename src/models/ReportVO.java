@@ -1,10 +1,13 @@
 package models;
+
+import java.util.Date;
+
 public class ReportVO {
-    private final int idWorker;
-    private final Date date,
-    private final String name, description;
+    private  int idWorker;
+    private  Date date;
+    private  String name, description;
     //Declaracion
-    public Report(String name, Date date, String description, int idWorker) {
+    public ReportVO(String name, Date date, String description, int idWorker) {
         this.name = name;
         this.date = date;
         this.description = description;
@@ -25,7 +28,7 @@ public class ReportVO {
     }
     //SET
     public void setName(String name) {
-        this.id=id;
+        this.name=name;
     }
     public void setDate(Date date) {
         this.date=date;
@@ -36,7 +39,7 @@ public class ReportVO {
     public void setIdWorker(int idWorker) {
         this.idWorker=idWorker;
     }
-    public toString(){
+    public String toString(){
         return "Reporte titulo: "+name+ ", descripcion: "+ description+", fecha: " +date+ ", Empleado: "+idWorker ;
     }
 }

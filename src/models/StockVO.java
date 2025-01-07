@@ -1,10 +1,10 @@
 package models;
 
 public class StockVO {
-    private final String productName;
-    private final int quantity;
+    private String productName;
+    private  int quantity;
 
-    public Stock(String productName, int quantity) {
+    public StockVO(String productName, int quantity) {
         this.productName = productName;
         this.quantity = quantity;
     }

@@ -1,20 +1,14 @@
 package models;
 
 public class  UserVO {
-    private final String name, password;
-    private final int tipo;
+    private String name, password;
+    private int tipo;
 
-    public User(int tipo, String name) {
-        if(tipo==null||name==null){
-            throw new NullPointerException();
-        }
+    public UserVO(int tipo, String name) {
         this.tipo=tipo;
         this.name = name;
     }
-    public Jefe(int tipo, String name, String password){
-        if(tipo==null||name==null||password==null){
-            throw new NullPointerException();
-        }
+    public UserVO(int tipo, String name, String password){
         this.tipo=tipo;
         this.name = name;
         this.password=password;

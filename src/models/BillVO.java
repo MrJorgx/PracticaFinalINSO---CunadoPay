@@ -1,10 +1,13 @@
 package models;
-public class BillVO {
-    private final int idBill, idTable, idWorker;
-    private final Date date;
-    private final float price;
 
-    public Bill(int idBill, Date date, float price,int idTable, int idWorker) {
+import java.util.Date;
+
+public class BillVO {
+    private int idBill, idTable, idWorker;
+    private Date date;
+    private float price;
+
+    public BillVO(int idBill, Date date, float price,int idTable, int idWorker) {
         this.idBill = idBill;
         this.date = date;
         this.price = price;

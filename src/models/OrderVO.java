@@ -1,12 +1,14 @@
 package models;
 
+import java.util.Date;
+
 public class OrderVO {
-    private final int id, numberTable, idWorker, state;
-    private final float price;
-    private final Date date;
+    private  int id, numberTable, idWorker, state;
+    private  float price;
+    private Date date;
 
     //State 0 default en preparacion, 1 servido 2 finalizado
-    public Order(int id, int state, float price, Date date, int numberTable, int idWorker) {
+    public OrderVO(int id, int state, float price, Date date, int numberTable, int idWorker) {
         this.id = id;
         this.state = state;
         this.price = price;
@@ -42,7 +44,7 @@ public class OrderVO {
 
     //SET
     public void setId(int id) {
-        this.id = id
+        this.id = id;
     }
 
     public void setState(int state) {

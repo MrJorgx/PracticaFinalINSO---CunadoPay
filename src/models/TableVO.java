@@ -2,7 +2,7 @@ package models;
 public class TableVO {
     private int id,state, capacity, idOrder;
     //Declaración
-    public Table(int id, int state, int capacity, int idOrder) {
+    public TableVO(int id, int state, int capacity, int idOrder) {
         this.id = id;
         this.state = state;
         this.capacity = capacity;
