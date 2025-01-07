@@ -14,15 +14,6 @@ public class UserDAOImpl implements UserDao {
         return "Usuario añadido  con exito";
     }
 
-    public User findById(int id) {
-        for (User buscar : users) {
-            if (buscar.getId() == id) {
-                return buscar;
-            }
-        }
-        return null;
-    }
-
     public List<User> findByName(String name) {
         List<User> imprimir = new ArrayList<>();
         for (User buscar : users) {
