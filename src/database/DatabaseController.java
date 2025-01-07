@@ -7,6 +7,9 @@ import java.sql.Statement;
 import io.github.cdimascio.dotenv.Dotenv;
 
 public class DatabaseController {
+    Connection connection;
+    Statement statement;
+
     public static void main(String[] args) {
         Dotenv dotenv = Dotenv.load();
 
@@ -14,14 +17,11 @@ public class DatabaseController {
         String dbUser = dotenv.get("DB_USER");
         String dbPassword = dotenv.get("DB_PASSWORD");
 
-        Connection connection = null;
-        Statement statement = null;
-
         try {
             connection = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
             statement = connection.createStatement();
             statement.executeQuery("SELECT 1");
-            System.out.println("Pinged your deployment. You successfully connected to PostgreSQL!");
+            System.out.println("Conexion correcta con la base de datos ");
 
             // Aquí puedes agregar cualquier operación que quieras realizar en la base de datos
 
