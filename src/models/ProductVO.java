@@ -20,7 +20,6 @@ public class ProductVO {
     }
 
 
-
     public String getName() {
         return name;
     }

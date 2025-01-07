@@ -21,23 +21,18 @@ public class OrderVO {
     public int getId() {
         return this.id;
     }
-
     public int getState() {
         return this.state;
     }
-
     public float getPrice() {
         return this.price;
     }
-
     public Date getDate() {
         return this.date;
     }
-
     public int getNumberTable() {
         return this.numberTable;
     }
-
     public int getIdWorker() {
         return this.idWorker;
     }
@@ -46,23 +41,18 @@ public class OrderVO {
     public void setId(int id) {
         this.id = id;
     }
-
     public void setState(int state) {
         this.state = state;
     }
-
     public void setPrice(float price) {
         this.price = price;
     }
-
     public void setDate(Date date) {
         this.date = date;
     }
-
     public void setNumberTable(int numberTable) {
         this.numberTable = numberTable;
     }
-
     public void setIdWorker(int idWorker) {
         this.idWorker = idWorker;
     }
