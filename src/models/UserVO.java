@@ -2,12 +2,18 @@ package models;
 
 public class  UserVO {
     private String name, password;
-    private int tipo;
+    private int tipo, id;
 
-    public UserVO(int tipo, String name) {
+    public UserVO(int tipo, String name){
+        this.tipo=tipo;
+        this.name=name;
+    }
+    public UserVO(int id, int tipo, String name) {
+        this.id=id;
         this.tipo=tipo;
         this.name = name;
     }
+
     public UserVO(int tipo, String name, String password){
         this.tipo=tipo;
         this.name = name;
@@ -19,6 +25,9 @@ public class  UserVO {
     }
     public int getTipo() {
         return this.tipo;
+    }
+    public int getId(){
+        return this.id;
     }
     public void setTipo(int tipo) {
         this.tipo=tipo;

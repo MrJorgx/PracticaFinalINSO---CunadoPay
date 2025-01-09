@@ -3,27 +3,37 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="controllers.InventoryController">
+<BorderPane xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.InventoryController">
     <!-- Panel superior: Encabezado -->
     <top>
-        <HBox spacing="10" style="-fx-padding: 10; -fx-background-color: #d3d3d3;">
-            <Label text="CuñadoPay" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
+        <HBox prefHeight="48.0" prefWidth="666.0" spacing="10" style="-fx-padding: 10; -fx-background-color: #d3d3d3;">
+            <Label style="-fx-font-size: 18px; -fx-font-weight: bold;" text="CuñadoPay" />
         </HBox>
     </top>
 
     <!-- Panel izquierdo: Lista de productos seleccionados -->
     <left>
         <VBox spacing="10" style="-fx-padding: 10; -fx-background-color: #f5f5f5;">
-            <Label text="Detalles del Pedido" style="-fx-font-weight: bold;" />
+            <Label style="-fx-font-weight: bold;" text="Detalles del Pedido" />
+         <SplitPane orientation="VERTICAL" prefHeight="42.0" prefWidth="361.0">
+           <items>
+             <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="0.0" prefWidth="330.0">
+                  <children>
+                     <TextField fx:id="userBy" layoutX="174.0" layoutY="-2.0" prefHeight="42.0" prefWidth="187.0" />
+                     <Label layoutX="38.0" layoutY="10.0" text="Camarero atendiendo:" />
+                  </children>
+               </AnchorPane>
+           </items>
+         </SplitPane>
             <TableView fx:id="tablaPedido">
                 <columns>
-                    <TableColumn text="Artículo" fx:id="columnaArticulo" />
-                    <TableColumn text="Cantidad" fx:id="columnaCantidad" />
-                    <TableColumn text="Precio" fx:id="columnaPrecio" />
-                    <TableColumn text="Total" fx:id="columnaTotal" />
+                    <TableColumn fx:id="columnaArticulo" text="Artículo" />
+                    <TableColumn fx:id="columnaCantidad" text="Cantidad" />
+                    <TableColumn fx:id="columnaPrecio" text="Precio" />
+                    <TableColumn fx:id="columnaTotal" text="Total" />
                 </columns>
             </TableView>
-            <Label text="Total: €" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+            <Label style="-fx-font-size: 16px; -fx-font-weight: bold;" text="Total: €" />
             <TextField fx:id="totalPedido" editable="false" />
         </VBox>
     </left>
@@ -32,24 +42,23 @@
     <center>
         <VBox spacing="10" style="-fx-padding: 10;">
             <!-- Botones de categorías -->
-            <HBox spacing="5">
-                <Button text="Refrescos" style="-fx-min-width: 100px;" onAction="#mostrarCategoriaRefrescos" />
-                <Button text="Cervezas" style="-fx-min-width: 100px;" onAction="#mostrarCategoriaCervezas" />
-                <Button text="Cafés" style="-fx-min-width: 100px;" onAction="#mostrarCategoriaCafes" />
-                <Button text="Comida" style="-fx-min-width: 100px;" onAction="#mostrarCategoriaComida" />
+            <HBox fx:id="typeButtons" spacing="5">
+                <!-- Aqui se generan dinamicamente los botones de las categorias segun la base de datos  -->
             </HBox>
 
-            <!-- Botones de productos -->
-            <GridPane hgap="10" vgap="10" style="-fx-padding: 10;">
-                <Button text="Coca-Cola" onAction="#agregarProducto" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                <Button text="Fanta" onAction="#agregarProducto" GridPane.columnIndex="1" GridPane.rowIndex="0" />
-                <Button text="Agua" onAction="#agregarProducto" GridPane.columnIndex="2" GridPane.rowIndex="0" />
-                <Button text="Red Bull" onAction="#agregarProducto" GridPane.columnIndex="3" GridPane.rowIndex="0" />
-                
-                <Button text="Cerveza" onAction="#agregarProducto" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                <Button text="Tónica" onAction="#agregarProducto" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                <Button text="Vichy" onAction="#agregarProducto" GridPane.columnIndex="2" GridPane.rowIndex="1" />
-                <Button text="Café" onAction="#agregarProducto" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+            <!-- Botones de productos una vez cliclada su categoria -->
+            <GridPane fx:id= "productPane" hgap="10" style="-fx-padding: 10;" vgap="10">
+
+            <columnConstraints>
+               <ColumnConstraints />
+               <ColumnConstraints />
+               <ColumnConstraints />
+               <ColumnConstraints />
+            </columnConstraints>
+            <rowConstraints>
+               <RowConstraints />
+               <RowConstraints />
+            </rowConstraints>
             </GridPane>
         </VBox>
     </center>
@@ -57,16 +66,16 @@
     <!-- Panel derecho: Opciones del pedido -->
     <right>
         <VBox spacing="10" style="-fx-padding: 10; -fx-background-color: #e8e8e8;">
-            <Button text="Cobrar" onAction="#cobrarPedido" style="-fx-background-color: orange; -fx-text-fill: white; -fx-font-size: 14px;" />
-            <Button text="Eliminar Producto" onAction="#eliminarProducto" style="-fx-min-height: 40px;" />
+            <Button style="-fx-background-color: orange; -fx-text-fill: white; -fx-font-size: 14px;" text="Cobrar" />
+            <Button style="-fx-min-height: 40px;" text="Eliminar Producto" />
         </VBox>
     </right>
 
     <!-- Panel inferior: Opciones de control -->
     <bottom>
         <HBox spacing="10" style="-fx-padding: 10; -fx-alignment: center;">
-            <Button text="Nuevo Pedido" onAction="#nuevoPedido" />
-            <Button text="Salir" onAction="#salir" />
+            <Button text="Nuevo Pedido" />
+            <Button onAction="#handleBackButton" text="Salir" />
         </HBox>
     </bottom>
 </BorderPane>

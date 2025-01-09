@@ -3,11 +3,13 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/17.0.12" fx:controller="controllers.MainController">
-    <top>
-        <Label prefHeight="175.0" prefWidth="374.0" text="Bienvenido a CuñadoPay - Gestión de Inventarios" />
-    </top>
-    <center>
-        <Button onAction="#goToInventory" text="Gestión de Inventario" />
-    </center>
-</BorderPane>
+<AnchorPane xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.MainController">
+   <children>
+      <VBox fx:id="vBox" alignment="TOP_CENTER" prefHeight="527.0" prefWidth="400" spacing="10" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
+         <Label style="-fx-font-size: 18px; -fx-font-weight: bold;" text="Bienvenido a la aplicación, seleccione su usuario" />
+
+      </VBox>
+      <Button fx:id="loginBossButton" text="Jefe" onAction="#handleLoggButton" AnchorPane.bottomAnchor="10.0" AnchorPane.rightAnchor="10.0" />
+   </children>
+
+</AnchorPane>

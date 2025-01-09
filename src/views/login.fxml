@@ -3,18 +3,44 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox alignment="CENTER" prefHeight="350.0" prefWidth="400.0" spacing="15" style="-fx-background-color: #f5f5f5; -fx-padding: 20;" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1">
+<VBox alignment="CENTER" prefHeight="400.0" prefWidth="400.0" spacing="20" style="-fx-background-color: #f5f5f5; -fx-padding: 30;" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.LoginController">
     <children>
-        <Label style="-fx-font-size: 28px; -fx-text-fill: #333333; -fx-font-weight: bold;" text="Inicio de sesión" />
-        <GridPane hgap="10" style="-fx-padding: 10;" vgap="10">
+        <!-- Botón Atrás -->
+        <GridPane prefHeight="50.0" prefWidth="307.0">
+            <columnConstraints>
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+            </columnConstraints>
+            <rowConstraints>
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            </rowConstraints>
             <children>
-                <Label style="-fx-font-size: 14px; -fx-text-fill: #555555;" text="Nombre:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                <TextField fx:id="usernameField" style="-fx-font-size: 14px;" GridPane.columnIndex="1" GridPane.rowIndex="0" />
-
-                <Label style="-fx-font-size: 14px; -fx-text-fill: #555555;" text="Contraseña:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                <PasswordField fx:id="passwordField" style="-fx-font-size: 14px;" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                <Button onAction="#handleBackButton" text="Atrás" style="-fx-background-color: #0078d4; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10px 20px;" />
             </children>
         </GridPane>
-        <Button text="Iniciar sesión" />
+
+        <!-- Título -->
+        <Label style="-fx-font-size: 30px; -fx-text-fill: #333333; -fx-font-weight: bold;" text="Inicio de sesión" />
+
+        <!-- Campos de texto para Nombre y Contraseña -->
+        <GridPane hgap="10" vgap="15" style="-fx-padding: 10;" alignment="CENTER">
+            <children>
+                <Label style="-fx-font-size: 14px; -fx-text-fill: #555555;" text="Nombre:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                <TextField fx:id="userLog" style="-fx-font-size: 14px; -fx-padding: 8px; -fx-background-color: #ffffff; -fx-border-color: #ccc; -fx-border-radius: 5px;" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+
+                <Label style="-fx-font-size: 14px; -fx-text-fill: #555555;" text="Contraseña:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                <PasswordField fx:id="passwordLog" style="-fx-font-size: 14px; -fx-padding: 8px; -fx-background-color: #ffffff; -fx-border-color: #ccc; -fx-border-radius: 5px;" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+            </children>
+            <columnConstraints>
+                <ColumnConstraints />
+                <ColumnConstraints />
+            </columnConstraints>
+            <rowConstraints>
+                <RowConstraints />
+                <RowConstraints />
+            </rowConstraints>
+        </GridPane>
+
+        <!-- Botón Iniciar sesión -->
+        <Button text="Iniciar sesión" onAction="#handleLoginButton" style="-fx-background-color: #0078d4; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10px 20px; -fx-border-radius: 5px;" />
     </children>
 </VBox>

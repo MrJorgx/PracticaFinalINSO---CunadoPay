@@ -7,8 +7,8 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-@Override
-public class ProductDAOImpl implements ProductDAO {
+
+public class ProductDAOImpl extends ProductDAO {
 
     private final Connection connection;
 
@@ -17,13 +17,13 @@ public class ProductDAOImpl implements ProductDAO {
     }
 
     public void add(ProductVO product) {
-        String sql = "INSERT INTO products (id, name, stock, price, url) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO products (name, stock, price,category, url) VALUES (?, ?, ?, ?, ?)";
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setInt(1, product.getId());
-            stmt.setString(2, product.getName());
-            stmt.setInt(3, product.getStock());
-            stmt.setFloat(4, product.getPrice());
+            stmt.setString(1, product.getName());
+            stmt.setInt(2, product.getStock());
+            stmt.setFloat(3, product.getPrice());
+            stmt.setInt(4, product.getCategory());
             stmt.setString(5, product.getURL());
             stmt.executeUpdate();
         } catch (SQLException e) {
@@ -33,14 +33,14 @@ public class ProductDAOImpl implements ProductDAO {
 
     @Override
     public void update(ProductVO product) {
-        String sql = "UPDATE products SET name = ?, stock = ?, price = ?, url = ? WHERE ID = ?";
+        String sql = "UPDATE products SET , stock = ?, price = ? category=?, url = ? WHERE name = ?";
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setString(1, product.getName());
-            stmt.setInt(2, product.getStock());
-            stmt.setFloat(3, product.getPrice());
+            stmt.setInt(1, product.getStock());
+            stmt.setFloat(2, product.getPrice());
+            stmt.setInt(3, product.getCategory());
             stmt.setString(4, product.getURL());
-            stmt.setInt(5, product.getId());
+            stmt.setString(5, product.getName());
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -48,31 +48,32 @@ public class ProductDAOImpl implements ProductDAO {
     }
 
     @Override
-    public void delete(int id) {
-        String sql = "DELETE FROM products WHERE id = ?";
+    public void delete(String name) {
+        String sql = "DELETE FROM products WHERE name = ?";
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setInt(1, id);
+            stmt.setString(1, name);
             stmt.executeUpdate();
         } catch(SQLException e) {
             e.printStackTrace();
         }
     }
 
-    @Override
-    public ProductVO getProductById(int id) {
-        String sql = "SELECT * FROM products WHERE id = ?";
+
+    public ProductVO getProductById(String name) {
+        String sql = "SELECT * FROM products WHERE name = ?";
 
         try(PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setInt(1, id);
+            stmt.setString(1, name);
             ResultSet rs = stmt.executeQuery();
 
             if(rs.next()) {
                 return new ProductVO(
-                    rs.getInt("id"),
+
                     rs.getString("name"),
                     rs.getInt("stock"),
                     rs.getFloat("price"),
+                    rs.getInt("category"),
                     rs.getString("url")
                 );
             }
@@ -83,20 +84,19 @@ public class ProductDAOImpl implements ProductDAO {
         return null;
     }
 
-    @Override
     public List<ProductVO> getAllProducts() {
         List<ProductVO> products = new ArrayList<>();
         String sql = "SELECT * FROM products";
 
         try(Statement stmt = connection.createStatement()) {
-            ResultsSet rs = stmt.executeQuery(sql);
+            ResultSet rs = stmt.executeQuery(sql);
 
             while(rs.next()) {
                 products.add(new ProductVO(
-                    rs.getInt("id"),
                     rs.getString("name"),
                     rs.getInt("stock"),
                     rs.getFloat("price"),
+                    rs.getInt("category"),
                     rs.getString("url")
                 ));
             }
