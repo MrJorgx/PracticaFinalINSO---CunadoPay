@@ -67,7 +67,7 @@
     <right>
         <VBox spacing="10" style="-fx-padding: 10; -fx-background-color: #e8e8e8;">
             <Button style="-fx-background-color: orange; -fx-text-fill: white; -fx-font-size: 14px;" text="Cobrar" />
-            <Button style="-fx-min-height: 40px;" text="Eliminar Producto" />
+            <Button onAction="#handlerNewTablePop" style="-fx-min-height: 40px;" text="Eliminar Producto" />
         </VBox>
     </right>
 

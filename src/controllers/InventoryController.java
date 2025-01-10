@@ -21,6 +21,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.scene.layout.GridPane;
 import java.io.IOException;
@@ -82,6 +83,21 @@ public class InventoryController {
         productPane.setVisible(false);
     }
 
+    public void handlerNewTablePop() throws IOException {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/popUppTable.fxml"));
+        Parent root = loader.load();
+
+        PopupTableController controller = loader.getController();
+        controller.setInventoryController(this);
+        controller.actualizar(FXCollections.observableArrayList(tablaPedido.getItems()));
+
+        Stage stage = new Stage();
+        stage.setScene(new Scene(root));
+        stage.initModality(Modality.APPLICATION_MODAL);
+        stage.showAndWait();
+        tablaPedido.refresh();
+        totalPrice();
+    }
 
 
 
@@ -163,4 +179,12 @@ public class InventoryController {
         double totalA = tablaPedido.getItems().stream().mapToDouble(ProductVO::getPre).sum();
         total.set(totalA);
     }
+    //Actualizar tabla para el pop up de eliminar
+    public void table(){
+        tablaPedido.refresh();
+    }
+    public TableView<ProductVO> getTable() {
+        return tablaPedido;
+    }
+
 }
