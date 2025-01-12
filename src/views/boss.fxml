@@ -19,7 +19,8 @@
            <items>
              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="10.0" prefWidth="334.0">
                   <children>
-                     <Label layoutX="124.0" layoutY="11.0" text="Jefe atendiendo" />
+                      <TextField fx:id="userBy" layoutX="174.0" layoutY="-2.0" prefHeight="42.0" prefWidth="187.0" />
+                      <Label layoutX="38.0" layoutY="10.0" text="Jefe atendiendo:" />
                   </children>
                </AnchorPane>
            </items>
@@ -32,8 +33,22 @@
                     <TableColumn fx:id="columnaTotal" text="Total" />
                 </columns>
             </TableView>
-            <Label style="-fx-font-size: 16px; -fx-font-weight: bold;" text="Total: €" />
-            <TextField fx:id="totalPedido" editable="false" />
+            <SplitPane dividerPositions="0.5033333333333333" prefHeight="100.0" prefWidth="388.0">
+                <items>
+                    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="75.0" prefWidth="178.0">
+                        <children>
+                            <TextField fx:id="totalPedido" editable="false" layoutX="38.0" layoutY="52.0" prefHeight="26.0" prefWidth="101.0" />
+                            <Label layoutX="29.0" layoutY="14.0" style="-fx-font-size: 16px; -fx-font-weight: bold;" text="Total con IVA: €" />
+                        </children>
+                    </AnchorPane>
+                    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
+                        <children>
+                            <TextField fx:id="totalPedidoNoIVA" editable="false" layoutX="38.0" layoutY="52.0" prefHeight="26.0" prefWidth="101.0" />
+                            <Label layoutX="29.0" layoutY="14.0" style="-fx-font-size: 16px; -fx-font-weight: bold;" text="Total sin IVA: €" />
+                        </children>
+                    </AnchorPane>
+                </items>
+            </SplitPane>
         </VBox>
     </left>
 
@@ -41,34 +56,23 @@
     <center>
         <VBox spacing="10" style="-fx-padding: 10;">
             <!-- Botones de categorías -->
-            <HBox spacing="5">
-                <Button style="-fx-min-width: 100px;" text="Comidas" />
-                <Button style="-fx-min-width: 100px;" text="Cafes" />
-                <Button style="-fx-min-width: 100px;" text="Postres" />
-                <Button style="-fx-min-width: 100px;" text="Bebidas" />
+            <HBox fx:id="typeButtons" spacing="5">
+                <!-- Aqui se generan dinamicamente los botones de las categorias segun la base de datos  -->
             </HBox>
 
-            <!-- Botones de productos -->
-            <GridPane hgap="10" style="-fx-padding: 10;" vgap="10">
-                <Button text="Coca-Cola" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                <Button text="Fanta" GridPane.columnIndex="1" GridPane.rowIndex="0" />
-                <Button text="Agua" GridPane.columnIndex="2" GridPane.rowIndex="0" />
-                <Button text="Red Bull" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+            <!-- Botones de productos una vez cliclada su categoria -->
+            <GridPane fx:id="productPane" hgap="10" style="-fx-padding: 10;" vgap="10">
 
-                <Button text="Cerveza" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                <Button text="Tónica" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                <Button text="Vichy" GridPane.columnIndex="2" GridPane.rowIndex="1" />
-                <Button text="Café" GridPane.columnIndex="3" GridPane.rowIndex="1" />
-            <columnConstraints>
-               <ColumnConstraints />
-               <ColumnConstraints />
-               <ColumnConstraints />
-               <ColumnConstraints />
-            </columnConstraints>
-            <rowConstraints>
-               <RowConstraints />
-               <RowConstraints />
-            </rowConstraints>
+                <columnConstraints>
+                    <ColumnConstraints />
+                    <ColumnConstraints />
+                    <ColumnConstraints />
+                    <ColumnConstraints />
+                </columnConstraints>
+                <rowConstraints>
+                    <RowConstraints />
+                    <RowConstraints />
+                </rowConstraints>
             </GridPane>
         </VBox>
     </center>
@@ -76,14 +80,15 @@
     <!-- Panel derecho: Opciones del pedido -->
     <right>
         <VBox prefHeight="168.0" prefWidth="132.0" spacing="10" style="-fx-padding: 10; -fx-background-color: #e8e8e8;">
-            <Button prefHeight="30.0" prefWidth="110.0" style="-fx-background-color: orange; -fx-text-fill: white; -fx-font-size: 14px;" text="Cobrar" />
-            <Button style="-fx-min-height: 40px;" text="Eliminar Producto" />
+            <Button onAction="#handlerPay" style="-fx-background-color: orange; -fx-text-fill: white; -fx-font-size: 14px;" text="Cobrar" />
+            <Button onAction="#handlerNewTablePop" style="-fx-min-height: 40px;" text="Eliminar Producto" />
          <Label text="Gestión de la tienda" wrapText="true" />
          <Button mnemonicParsing="false" onAction="#handleAddWorker" prefHeight="42.0" prefWidth="112.0" text="Añadir Empleado" />
-         <Button mnemonicParsing="false" prefHeight="39.0" prefWidth="111.0" text="Consultar Stock" />
-         <Button mnemonicParsing="false" prefHeight="38.0" prefWidth="112.0" text="Consultar Ventas" />
+         <Button mnemonicParsing="false" onAction="#handleCheckStock" prefHeight="39.0" prefWidth="111.0" text="Consultar Stock" />
+         <Button mnemonicParsing="false" onAction="#handlerCheckSale"  prefHeight="38.0" prefWidth="112.0" text="Consultar Ventas" />
          <Button mnemonicParsing="false" onAction="#handlerShowAllProducts" prefHeight="35.0" prefWidth="111.0" text="Listado Productos" />
          <Button mnemonicParsing="false" onAction="#handleAddProduct" prefHeight="30.0" prefWidth="109.0" text="Añadir Producto" />
+         <Button mnemonicParsing="false" onAction="#handlerAddtable" prefHeight="31.0" prefWidth="110.0" text="Gestionar  Mesas" />
          <Button mnemonicParsing="false" onAction="#handleAddBoss" prefHeight="32.0" prefWidth="114.0" text="Añadir Jefe" />
         </VBox>
     </right>

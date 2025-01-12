@@ -29,6 +29,13 @@ public class ProductVO {
         this.price=price;
         this.pre = new SimpleFloatProperty(price);
     }
+    public ProductVO(String name, int cat, float price, int category){
+        this.name =  name;
+        this.cat= new SimpleIntegerProperty(cat);
+        this.price=price;
+        this.pre = new SimpleFloatProperty(price);
+        this.category=category;
+    }
 
     //Categorias 0-bebidas, 1-cafe 2-comidas 3-postres
     public void setCat(int cat) {
@@ -113,4 +120,5 @@ public class ProductVO {
 
         return "Nombre del producto: " +name+ " Categoria: "+categoryAux;
     }
+
 }

@@ -1,36 +1,30 @@
 package controllers;
 
-//import models.ProductVO;
-//import java.util.ArrayList;
-//import java.util.List;
+import dao.*;
 
-import database.DatabaseController;
 import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleFloatProperty;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.scene.layout.GridPane;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import models.BillVO;
+import models.OrderVO;
 import models.ProductVO;
-import javafx.scene.layout.VBox;
 import models.StockVO;
 
 public class InventoryController {
@@ -52,22 +46,40 @@ public class InventoryController {
     private TableColumn<ProductVO, Float> columnaTotal;
     @FXML
     private TextField totalPedido;
+    @FXML
+    private TextField totalPedidoNoIVA;
 
     private SimpleDoubleProperty total=new SimpleDoubleProperty(0);
+    private SimpleDoubleProperty totalNoIVA=new SimpleDoubleProperty(0);
+
+
+    private BillDAO billdao=new BillDAO();
+    private ProductDAO productdao;
+    private UserDAO userdao;
+    private TableDAO tabledao;
+    private StockDAO stockdao;
+    private OrderDAO orderdao;
 
     public void initialize(){
+        productdao=new ProductDAO(this);
+        userdao=new UserDAO();
+        tabledao=new TableDAO();
+        stockdao=new StockDAO();
+        orderdao= new OrderDAO();
         String user= MainController.nameUser();
         userBy.setText(user);
         userBy.setEditable(false);
-       handlerBebidasButton();
+        handlerBebidasButton();
         columnaArticulo.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getName()));
         columnaCantidad.setCellValueFactory(cellData -> cellData.getValue().catProperty().asObject());
         columnaPrecio.setCellValueFactory(cellData -> new SimpleStringProperty(String.format("%.2f", cellData.getValue().getPrice())));
         columnaTotal.setCellValueFactory(cellData -> cellData.getValue().preProperty().asObject());
         totalPedido.textProperty().bind(total.asString("%.2f"));
+        totalPedidoNoIVA.textProperty().bind(totalNoIVA.asString("%.2f"));
         tablaPedido.setItems(FXCollections.observableArrayList());
     }
-    //Boton de salir
+
+
     public void handleBackButton(ActionEvent event) throws IOException {
         Parent homePage = FXMLLoader.load(getClass().getResource("/views/main.fxml"));
         // Obtener el escenario actual
@@ -79,7 +91,7 @@ public class InventoryController {
     }
 
     public void handlerBebidasButton(){
-        loadCategory();
+        productdao.loadCategory();
         productPane.setVisible(false);
     }
 
@@ -96,95 +108,99 @@ public class InventoryController {
         stage.initModality(Modality.APPLICATION_MODAL);
         stage.showAndWait();
         tablaPedido.refresh();
-        totalPrice();
+        productdao.totalPrice();
     }
 
-
-
-
-
-    //Botones automaticos de las categorias de los productos de la base de datos
-    private void loadCategory(){
-        String[] categoryName  ={"Comidas", "Cafes", "Postres", "Bebidas"};
-        typeButtons.getChildren().clear();
-        for(int i=0; i < categoryName.length; i++){
-            int aux=i;
-            Button categoryButton= new Button(categoryName[i]);
-            categoryButton.setStyle("-fx-min-width: 100px; -fx-background-color: lightgray;");
-            categoryButton.setOnAction(event ->{
-                    System.out.println("Categoria cliclada: "+ categoryName[aux]);
-                    loadProducts(aux);
-            });
-            typeButtons.getChildren().add(categoryButton);
-            categoryButton.setDisable(false);
+    public void handlerPay(){
+        ObservableList<ProductVO> productSell = tablaPedido.getItems();
+        if(productSell.size()==0){
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText("No existen productos ");
+            alert.setContentText("No hay ningun producto para realizar la transaccion");
+            alert.showAndWait();
+            return;
         }
-    }
-    //Carga los productos de cada categoria
-    private void loadProducts(int aux){
-        productPane.getChildren().clear();
-        productPane.setVisible(true);
-        String sql= "SELECT \"nombre\", \"precio\" FROM \"producto\" WHERE \"tipo\" = ?";
-        try (Connection conn = DatabaseController.main();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setInt(1, aux);
-            ResultSet rs = stmt.executeQuery();
-            int row=0;
-            int col=0;
-            while(rs.next()){
-                String productName=rs.getString("nombre");
-                float productPrice=rs.getFloat("precio");
-                Button productButton= new Button(productName);
-                productButton.setStyle("-fx-min-width: 100px; -fx-min-height: 40px; -fx-background-color: lightblue;");
-                productPane.add(productButton, col, row);
-                productButton.setOnAction(event -> {
-                    addOrder(productName,  productPrice,1);
-                    System.out.println("Producto seleccionado: " + productName);
-                    // Lógica para agregar a pedido o gestionar el clic
-                });
-                col++;
-                if (col > 3) { // Cambiar fila después de 4 columnas
-                    col = 0;
-                    row++;
-                }
-            }
-
-        } catch (SQLException e) {
-            System.err.println("Error al cargar productos: " + e.getMessage());
-        }
-    }
-    //Añade  los productos ala tabla cuando se clicla en ellos
-    private void addOrder(String name, float precio, int cantidad){
-        ProductVO addOrder= new ProductVO(name, cantidad, precio);
-        boolean addBoolean=true;
-        float aux=precio;
-        for(ProductVO add: tablaPedido.getItems()){
-            if(add.getName().equals(addOrder.getName())) {
-                add.setCat(add.getCat()+1);
-
-                add.setPre(add.getPre()+aux);
-                System.out.println("veces clicladas: "+add.getCat());
-                System.out.println("importe total: "+add.getPre());
-                addBoolean = false;
-                break;
+        List<StockVO> stockList = new ArrayList<>();
+        for (ProductVO product : productSell) {
+            StockVO stock = stockdao.change(product);
+            if (stock != null) {
+                stockList.add(stock);
+            } else {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error");
+                alert.setHeaderText("No se pudo obtener información del stock");
+                alert.setContentText("No se pudo convertir el producto: " + product.getName());
+                alert.showAndWait();
+                return;
             }
         }
-        if(addBoolean) {
-            tablaPedido.getItems().add(addOrder);
+        ObservableList<StockVO> observableStockList = FXCollections.observableArrayList(stockList);
+        List<String> errores = stockdao.verifyStock(observableStockList);
+        if (!errores.isEmpty()) {
+            // Si hay errores, mostrar mensaje
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error de Stock");
+            alert.setHeaderText("No hay suficiente stock para completar la venta");
+            alert.setContentText(String.join("\n", errores));
+            alert.showAndWait();
+        } else {
+            // Si no hay errores, proceder con la venta
+            float aux = Float.parseFloat(totalPedido.getText().replace(",", "."));
+            LocalDateTime now = LocalDateTime.now();
+            // Formatear la fecha y hora (opcional)
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+            String fecha = now.format(formatter);
+            int idUser= userdao.getUserIdByName(userBy.getText());
+            //number table =0 si se hace en barra //getnumberMesa() ifmesa 0 esto sino se modifica
+            OrderVO order= new OrderVO(2,aux,fecha, 0, idUser);
+            BillVO bill=  new BillVO(fecha,aux,0,idUser, tablaPedido);
+            orderdao.newOrder(order);
+            int idOrder= orderdao.getOrderIdByName(2,aux,fecha,0,idUser);
+            orderdao.realizarVenta(observableStockList);
+            billdao.addTicket(fecha, aux, idOrder, idUser);
+            billdao.generarTicket(bill);
+            tablaPedido.getItems().clear();
+            total.set(0.00);
+            totalNoIVA.set(0.00);
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Venta Realizada");
+            alert.setHeaderText(null);
+            alert.setContentText("La venta se ha realizado con éxito.");
+            alert.showAndWait();
         }
-        totalPrice();
     }
-    //Calcula el total del textfield
-    private void totalPrice() {
-        double totalA = tablaPedido.getItems().stream().mapToDouble(ProductVO::getPre).sum();
-        total.set(totalA);
+
+    public SimpleDoubleProperty getTotal(){
+        return total;
     }
-    //Actualizar tabla para el pop up de eliminar
+    public SimpleDoubleProperty getTotalNoIVA(){
+        return totalNoIVA;
+    }
+    public HBox getTypeButtons() {
+        return typeButtons;
+    }
+    public GridPane getProductPane(){
+        return productPane;
+    }
+    public TableView <ProductVO> getTablaPedido(){
+        return tablaPedido;
+    }
     public void table(){
         tablaPedido.refresh();
     }
     public TableView<ProductVO> getTable() {
         return tablaPedido;
     }
+
+
+
+
+
+
+
+
+
+
 
 }

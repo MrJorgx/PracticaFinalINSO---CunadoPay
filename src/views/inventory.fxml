@@ -33,8 +33,22 @@
                     <TableColumn fx:id="columnaTotal" text="Total" />
                 </columns>
             </TableView>
-            <Label style="-fx-font-size: 16px; -fx-font-weight: bold;" text="Total: €" />
-            <TextField fx:id="totalPedido" editable="false" />
+         <SplitPane dividerPositions="0.5033333333333333" prefHeight="100.0" prefWidth="388.0">
+           <items>
+             <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="75.0" prefWidth="178.0">
+                  <children>
+                        <TextField fx:id="totalPedido" editable="false" layoutX="38.0" layoutY="52.0" prefHeight="26.0" prefWidth="101.0" />
+                        <Label layoutX="29.0" layoutY="14.0" style="-fx-font-size: 16px; -fx-font-weight: bold;" text="Total con IVA: €" />
+                  </children>
+               </AnchorPane>
+             <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
+                  <children>
+                      <TextField fx:id="totalPedidoNoIVA" editable="false" layoutX="38.0" layoutY="52.0" prefHeight="26.0" prefWidth="101.0" />
+                      <Label layoutX="29.0" layoutY="14.0" style="-fx-font-size: 16px; -fx-font-weight: bold;" text="Total sin IVA: €" />
+                  </children>
+               </AnchorPane>
+           </items>
+         </SplitPane>
         </VBox>
     </left>
 
@@ -47,7 +61,7 @@
             </HBox>
 
             <!-- Botones de productos una vez cliclada su categoria -->
-            <GridPane fx:id= "productPane" hgap="10" style="-fx-padding: 10;" vgap="10">
+            <GridPane fx:id="productPane" hgap="10" style="-fx-padding: 10;" vgap="10">
 
             <columnConstraints>
                <ColumnConstraints />
@@ -66,7 +80,7 @@
     <!-- Panel derecho: Opciones del pedido -->
     <right>
         <VBox spacing="10" style="-fx-padding: 10; -fx-background-color: #e8e8e8;">
-            <Button style="-fx-background-color: orange; -fx-text-fill: white; -fx-font-size: 14px;" text="Cobrar" />
+            <Button onAction="#handlerPay" style="-fx-background-color: orange; -fx-text-fill: white; -fx-font-size: 14px;" text="Cobrar" />
             <Button onAction="#handlerNewTablePop" style="-fx-min-height: 40px;" text="Eliminar Producto" />
         </VBox>
     </right>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="controllers.PopupTableBossController" spacing="10" alignment="CENTER" prefWidth="400" prefHeight="300">
+    <TableView fx:id="popupTabla">
+        <columns>
+            <TableColumn fx:id="nombre" text="Artículo" />
+            <TableColumn fx:id="cantidad" text="Cantidad" />
+            <TableColumn fx:id="precio" text="Precio" />
+            <TableColumn fx:id="total" text="Total" />
+            <TableColumn fx:id="acciones" text="Acciones" />
+        </columns>
+    </TableView>
+    <Button text="Cerrar" onAction="#handleBackButton" />
+</VBox>

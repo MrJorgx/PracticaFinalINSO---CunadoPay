@@ -1,9 +1,12 @@
 package controllers;
 
-import database.DatabaseController;
+import dao.*;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -11,24 +14,163 @@ import javafx.scene.control.*;
 import javafx.scene.control.Dialog;
 import javafx.geometry.Insets;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Pair;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
-import javafx.scene.control.Alert; // Para mostrar cuadros de diálogo (Alert)
-import javafx.scene.control.TextInputDialog; // Para mostrar un cuadro de entrada de texto
+import javafx.scene.control.Alert;
+import javafx.scene.control.TextInputDialog;
+import models.BillVO;
+import models.OrderVO;
 import models.ProductVO;
+import models.StockVO;
+import static dao.UserDAO.getNameUserBoss;
+
 
 public class BossController {
+    @FXML
+    private TextField userBy;
+    @FXML
+    private GridPane productPane;
+    @FXML
+    private HBox typeButtons;
+    @FXML
+    public TableView <ProductVO> tablaPedido;
+    @FXML
+    private TableColumn<ProductVO, String> columnaArticulo;
+    @FXML
+    private TableColumn<ProductVO, Integer> columnaCantidad;
+    @FXML
+    private TableColumn<ProductVO, String> columnaPrecio;
+    @FXML
+    private TableColumn<ProductVO, Float> columnaTotal;
+    @FXML
+    private TextField totalPedido;
+    @FXML
+    private TextField totalPedidoNoIVA;
 
-    public  void handlerShowAllProducts() throws IOException {
+    private SimpleDoubleProperty total=new SimpleDoubleProperty(0);
+    private SimpleDoubleProperty totalNoIVA=new SimpleDoubleProperty(0);
+    private BillDAO billdao=new BillDAO();
+    private ProductDAO productdao;
+    private UserDAO userdao;
+    private TableDAO tabledao;
+    private StockDAO stockdao;
+    private OrderDAO orderdao;
+    private final int MAX_TABLE=10;
+
+    public void initialize(){
+        productdao=new ProductDAO(this);
+        userdao=new UserDAO();
+        tabledao=new TableDAO();
+        stockdao=new StockDAO();
+        orderdao= new OrderDAO();
+        String user=getNameUserBoss();
+        userBy.setText(user);
+        userBy.setEditable(false);
+        handlerBebidasButton();
+        columnaArticulo.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getName()));
+        columnaCantidad.setCellValueFactory(cellData -> cellData.getValue().catProperty().asObject());
+        columnaPrecio.setCellValueFactory(cellData -> new SimpleStringProperty(String.format("%.2f", cellData.getValue().getPrice())));
+        columnaTotal.setCellValueFactory(cellData -> cellData.getValue().preProperty().asObject());
+        totalPedido.textProperty().bind(total.asString("%.2f"));
+        totalPedidoNoIVA.textProperty().bind(totalNoIVA.asString("%.2f"));
+        tablaPedido.setItems(FXCollections.observableArrayList());
+    }
+
+    public void handlerBebidasButton(){
+        productdao.loadCategory();
+        productPane.setVisible(false);
+    }
+
+    public void handlerNewTablePop() throws IOException {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/popUppTableBoss.fxml"));
+        Parent root = loader.load();
+
+        PopupTableBossController controller = loader.getController();
+        controller.setBossController(this);
+        controller.actualizar(FXCollections.observableArrayList(tablaPedido.getItems()));
+
+        Stage stage = new Stage();
+        stage.setScene(new Scene(root));
+        stage.initModality(Modality.APPLICATION_MODAL);
+        stage.showAndWait();
+        tablaPedido.refresh();
+        productdao.totalPrice();
+    }
+
+    public void handlerPay()  {
+        ObservableList<ProductVO> productSell = tablaPedido.getItems();
+        List<StockVO> stockList = new ArrayList<>();
+        if(productSell.size()==0){
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText("No existen productos ");
+            alert.setContentText("No hay ningun producto para realizar la transaccion");
+            alert.showAndWait();
+            return;
+        }
+        for (ProductVO product : productSell) {
+            StockVO stock = stockdao.change(product);
+            if (stock != null) {
+                stockList.add(stock);
+            } else {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error");
+                alert.setHeaderText("No se pudo obtener información del stock");
+                alert.setContentText("No se pudo convertir el producto: " + product.getName());
+                alert.showAndWait();
+                return;
+            }
+        }
+        ObservableList<StockVO> observableStockList = FXCollections.observableArrayList(stockList);
+
+        List<String> errores = stockdao.verifyStock(observableStockList);
+
+        if (!errores.isEmpty()) {
+            // Si hay errores, mostrar mensaje
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error de Stock");
+            alert.setHeaderText("No hay suficiente stock para completar la venta");
+            alert.setContentText(String.join("\n", errores));
+            alert.showAndWait();
+        } else {
+            // Si no hay errores, proceder con la venta
+            float aux = Float.parseFloat(totalPedido.getText().replace(",", "."));
+            LocalDateTime now = LocalDateTime.now();
+            // Formatear la fecha y hora (opcional)
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+            String fecha = now.format(formatter);
+            int idUser= userdao.getUserIdByName((userBy.getText()));
+            //number table =0 si se hace en barra //getnumberMesa() ifmesa 0 esto sino se modifica
+            OrderVO order= new OrderVO(2,aux,fecha, 0, idUser);
+            BillVO bill=  new BillVO(fecha,aux,0,idUser, tablaPedido);
+            orderdao.newOrder(order);
+            int idOrder= orderdao.getOrderIdByName(2,aux,fecha,0,idUser);
+            orderdao.realizarVenta(observableStockList);
+            billdao.addTicket(fecha, aux, idOrder, idUser);
+            billdao.generarTicket(bill);
+            tablaPedido.getItems().clear();
+            total.set(0.00);
+            totalNoIVA.set(0.00);
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Venta Realizada");
+            alert.setHeaderText(null);
+            alert.setContentText("La venta se ha realizado con éxito.");
+            alert.showAndWait();
+        }
+    }
+
+    public void handlerShowAllProducts()   {
         Dialog<Void> list = new Dialog<>();
         list.setTitle("Lista de Productos");
         list.setHeaderText("Productos  disponibles en la app:");
@@ -37,7 +179,7 @@ public class BossController {
 
         // Crear la lista de productos
         ListView<ProductVO> showList = new ListView<>();
-        ObservableList<ProductVO> allProducts = showAllProducts();
+        ObservableList<ProductVO> allProducts = productdao.showAllProducts();
 
         if (allProducts != null && !allProducts.isEmpty()) {
             showList.setItems(allProducts);
@@ -55,7 +197,7 @@ public class BossController {
         list.showAndWait();
     }
 
-    public void handleAddProduct(ActionEvent event) throws IOException {
+    public void handleAddProduct( )   {
         Dialog<Pair<String, String>> dialog = new Dialog<>();
         dialog.setTitle("Añadir Producto");
         dialog.setHeaderText("Introduce los detalles del nuevo producto");
@@ -118,7 +260,7 @@ public class BossController {
                     error.setContentText("Introduzca el precio de forma correcta.");
                     error.showAndWait();
                 } else {
-                    if(comprobarProduct(name)){
+                    if(productdao.comprobarProduct(name)){
                         Alert error = new Alert(Alert.AlertType.ERROR);
                         error.setTitle("Error");
                         error.setHeaderText(null);
@@ -135,9 +277,9 @@ public class BossController {
                             intro = 3;
                         }
                         Float auxPrice = Float.parseFloat(price);  // Conversión a float
-                        addProduct(name,intro, auxPrice ,url);
-                        int idUser= getProductIdByName(name);
-                        addToStock(idUser,auxPrice,50);
+                        productdao.addProduct(name,intro, auxPrice ,url);
+                        int idUser= productdao.getProductIdByName(name);
+                        stockdao.addToStock(idUser,auxPrice,50);
                         Alert mostrar = new Alert(Alert.AlertType.INFORMATION);
                         mostrar.setTitle("Correcto");
                         mostrar.setHeaderText(null);
@@ -164,7 +306,6 @@ public class BossController {
         stage.setScene(scene);
         stage.show();
     }
-
     //Si datiempo añadirque el jefe se vuelva a loguear para hacer esta accion
     public void handleAddBoss(ActionEvent event) {
         Dialog<Pair<String, String>> dialog = new Dialog<>();
@@ -207,14 +348,14 @@ public class BossController {
             String password = credentials.getValue();
 
             if (!name.trim().isEmpty() && !password.trim().isEmpty()) {
-                if (comprobar(name)) {
+                if (userdao.comprobar(name)) {
                     Alert error = new Alert(Alert.AlertType.ERROR);
                     error.setTitle("Error");
                     error.setHeaderText(null);
                     error.setContentText("Ya existe un usuario en la base de datos con ese nombre");
                     error.showAndWait();
                 } else {
-                    createBoss(name, password, 1);
+                    userdao.createBoss(name, password, 1);
                     Alert mostrar = new Alert(Alert.AlertType.INFORMATION);
                     mostrar.setTitle("Correcto");
                     mostrar.setHeaderText(null);
@@ -230,8 +371,43 @@ public class BossController {
             }
         });
     }
+    //Gestionar mesas
+    public void handlerAddtable( ){
+        Alert table= new Alert(Alert.AlertType.NONE);
+        Alert errorAlert= new Alert(Alert.AlertType.ERROR);
+        table.setTitle("Gestionar mesas");
+        table.setHeaderText("Selecciona una opcion");
+        table.setContentText("¿Que acción va a realizar?");
+        ButtonType addButtonTable = new ButtonType("Añadir mesa");
+        ButtonType manageButtonTable= new ButtonType("Gestionar mesas");
+        ButtonType exitButton= new ButtonType("Cancelar");
+        table.getButtonTypes().setAll(addButtonTable,manageButtonTable,exitButton);
 
-    public void handleAddWorker(ActionEvent event) throws IOException {
+        table.showAndWait().ifPresent(action -> {
+            if (action == addButtonTable) {
+                System.out.println("Opción seleccionada: Añadir mesa");
+                int actualCapacity= tabledao.countTables();
+                //La barra (mesa0 )no cuenta
+                actualCapacity=actualCapacity-1;
+                if(actualCapacity<MAX_TABLE){
+                    tabledao.addTable(actualCapacity+1);
+                }else{
+                    errorAlert.setTitle("Error");
+                    errorAlert.setHeaderText("Error al añadir la mesa");
+                    errorAlert.setContentText("Numero maximo de mesas alcanzado, no hay mas sitio fisico en el establecimiento");
+                    errorAlert.showAndWait();
+                }
+            } else if (action == manageButtonTable) {
+                System.out.println("Opción seleccionada: Gestionar mesas");
+                tabledao.manageTables();
+            } else {
+                System.out.println("Opción seleccionada: Cancelar");
+                // Opcional: lógica para cancelar
+            }
+        });
+    }
+
+    public void handleAddWorker( )   {
         TextInputDialog add= new TextInputDialog();
         add.setHeaderText("Añadir empleado");
         add.setContentText("Añadir un nuevo empleado");
@@ -239,14 +415,14 @@ public class BossController {
         Optional<String> result = add.showAndWait();
         result.ifPresent(name-> {
             if(!name.trim().isEmpty()){
-                if(comprobar(name)){
+                if(userdao.comprobar(name)){
                     Alert error  = new Alert(Alert.AlertType.ERROR);
                     error.setTitle("Error");
                     error.setHeaderText(null);
                     error.setContentText("Ya existe el empleado con ese nombre");
                     error.showAndWait();
                 }else {
-                    createUser(name, null);
+                    userdao.createUser(name, null);
                     Alert mostrar = new Alert(Alert.AlertType.INFORMATION);
                     mostrar.setTitle("Correcto");
                     mostrar.setHeaderText(null);
@@ -262,155 +438,125 @@ public class BossController {
             }
         });
     }
-
-    //Metodo que  devuelve true si existe ya el usuario en la base de datos
-    private boolean comprobar(String nombre){
-        String sql = "SELECT COUNT(*) FROM \"user\" WHERE \"name\" = ?";
-        try (Connection conn = DatabaseController.main();
-             PreparedStatement checkStmt = conn.prepareStatement(sql)) {
-            // Comprobar si el usuario ya existe
-            checkStmt.setString(1, nombre);
-            ResultSet rs = checkStmt.executeQuery();
-            if (rs.next()) {
-                // Devuelve true si existe, false si no
-                return rs.getInt(1) > 0;
-            }
-            return false;
-        } catch (SQLException e) {
-            System.err.println("Error al comprobar el usuario en la base de datos: " + e.getMessage());
-            e.printStackTrace();
-            return false;
+    //Boton de consultar stock
+    public void handlerCheckSale(){
+        Dialog<Void> list = new Dialog<>();
+        list.setTitle("Historial de Ventas");
+        list.setHeaderText("Listado de ventas realizadas");
+        list.setResizable(true);
+        List<BillVO> all = billdao.getAllBill();
+        ListView<BillVO> showList = new ListView<>();
+        ObservableList<BillVO> observableList = FXCollections.observableArrayList(all);
+        if (observableList != null && !observableList.isEmpty()) {
+            showList.setItems(observableList);
+        } else {
+            showList.setPlaceholder(new Label("No hay facturas disponibles"));
         }
-    }
-    //Añade jefe
-    public boolean createBoss(String username, String password, int type){
-        String sql = "INSERT INTO \"user\" ( \"name\", \"password\", \"type\") VALUES (?,?,?)";
-        try (Connection conn = DatabaseController.main();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-
-            stmt.setString(1, username);
-            stmt.setString(2, password);
-            stmt.setInt(3, type);
-
-            int rowsInserted = stmt.executeUpdate();
-            return rowsInserted > 0; // Devuelve true si se inserta correctamente
-
-        } catch (SQLException e) {
-            System.err.println("Error al crear el usuario: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
-    }
-    //Añade usuario
-    public boolean createUser(String username, String password) {
-        String sql = "INSERT INTO \"user\" ( \"name\", \"password\") VALUES (?, ?)";
-        try (Connection conn = DatabaseController.main();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setString(1, username);
-            stmt.setString(2, password);
-
-            int rowsInserted = stmt.executeUpdate();
-            return rowsInserted > 0; // Devuelve true si se inserta correctamente
-
-        } catch (SQLException e) {
-            System.err.println("Error al crear el usuario: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
-    }
-    //Comprobar si  el producto existe
-    public boolean comprobarProduct(String name){
-        String sql = "SELECT COUNT(*) FROM \"producto\" WHERE \"nombre\" = ?";
-        try (Connection conn = DatabaseController.main();
-             PreparedStatement checkStmt = conn.prepareStatement(sql)) {
-            // Comprobar si el usuario ya existe
-            checkStmt.setString(1, name);
-            ResultSet rs = checkStmt.executeQuery();
-            if (rs.next()) {
-                // Devuelve true si existe, false si no
-                return rs.getInt(1) > 0;
-            }
-            return false;
-        } catch (SQLException e) {
-            System.err.println("Error al comprobar el usuario en la base de datos: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
-    }
-    //Añadir el producto
-    public boolean addProduct(String name, int type, float price, String url){
-        String sql= "INSERT INTO \"producto\" (\"nombre\", \"tipo\", \"precio\", \"url\") VALUES (?,?,?, ?)";
-        try (Connection conn = DatabaseController.main();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, name);
-            stmt.setInt(2, type);
-            stmt.setFloat(3, price);
-            stmt.setString(4, url);
-            int rowsInserted = stmt.executeUpdate();
-            return rowsInserted > 0;
-        }
-        catch (SQLException e) {
-            System.err.println("Error al crear el usuario: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
-    }
-    public boolean addToStock(int idproduct,  float price, int  quantity) {
-        String sql = "INSERT INTO \"inventario\" (\"idProducto\", \"cantidadDisponible\", \"precio\") VALUES (?, ?, ?)";
-        try (Connection conn = DatabaseController.main();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, idproduct);
-            stmt.setInt(2, quantity);
-            stmt.setFloat(3, price);
-
-
-            int rowsInserted = stmt.executeUpdate();
-            return rowsInserted > 0;
-        } catch (SQLException e) {
-            System.err.println("Error al agregar stock al inventario: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
-    }
-    public int getProductIdByName(String username) {
-        String sql = "SELECT \"idProducto\" FROM \"producto\" WHERE \"nombre\" = ?";
-        try (Connection conn = DatabaseController.main();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, username);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt("idProducto"); // Devuelve el iduser encontrado
+        showList.setCellFactory(lv -> new ListCell<BillVO>() {
+            @Override
+            protected void updateItem(BillVO item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item.toString());
                 }
             }
-        } catch (SQLException e) {
-            System.err.println("Error al buscar el ID del producto: " + e.getMessage());
-            e.printStackTrace();
-        }
-        return -1;
+        });
+        showList.setPrefWidth(400);
+        VBox vbox = new VBox();
+        vbox.getChildren().addAll(showList);
+        list.getDialogPane().setContent(vbox);
+        ButtonType closeButton = new ButtonType("Cerrar", ButtonBar.ButtonData.CANCEL_CLOSE);
+        list.getDialogPane().getButtonTypes().add(closeButton);
+        list.showAndWait();
     }
-    //Mostrar todos los productos  que existen
-    private ObservableList<ProductVO> showAllProducts() {
-        ObservableList<ProductVO> productList = FXCollections.observableArrayList();
-        String sql = "SELECT \"nombre\", \"tipo\"  FROM \"producto\" ";
-        try (Connection conn = DatabaseController.main();
-             PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-            while (rs.next()) {
-                String name = rs.getString("nombre");
-                int category = rs.getInt("tipo");
-                // Crear un nuevo objeto ProductVO y añadirlo a la lista
-                ProductVO product = new ProductVO(name, 0,0,category, "");
-                productList.add(product);
+
+    public void handleCheckStock(){
+        Dialog<Void> list = new Dialog<>();
+        list.setTitle("Stock en el inventario");
+        list.setHeaderText("Stock disponible");
+        list.setResizable(true);
+        ListView<StockVO> showList = new ListView<>();
+        ObservableList<StockVO> allProducts = stockdao.showAllStock();
+
+        if (allProducts != null && !allProducts.isEmpty()) {
+            showList.setItems(allProducts);
+        } else {
+            // Si no hay productos, mostrar un mensaje
+            showList.setPlaceholder(new Label("No hay productos disponibles"));
+        }
+        showList.setCellFactory(lv -> new ListCell<StockVO>() {
+            @Override
+            protected void updateItem(StockVO item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setStyle("");
+                } else {
+                    setText(item.toString()); // Asegúrate de que `StockVO` tenga un `toString` apropiado
+                    if (item.getQuantity() < 50) {
+                        setStyle("-fx-background-color: red; -fx-text-fill: white;");
+                    } else if (item.getQuantity() >= 50&& item.getQuantity()< 70) {
+                        setStyle("-fx-background-color: yellow; -fx-text-fill: black;");
+                    } else {
+                        setStyle(""); // Sin estilo para valores mayores a 50
+                    }
+                }
             }
-            return productList;
-        } catch (SQLException e) {
-            System.err.println("Error al obtener los productos: " + e.getMessage());
-            e.printStackTrace();
-            return null;
-        }
+        });
+        showList.setPrefWidth(400);
+        VBox vbox = new VBox();
+        vbox.getChildren().addAll(showList);
+        list.getDialogPane().setContent(vbox);
+
+        ButtonType closeButton = new ButtonType("Cerrar", ButtonBar.ButtonData.CANCEL_CLOSE);
+        list.getDialogPane().getButtonTypes().add(closeButton);
+        list.showAndWait();
     }
+
+    public SimpleDoubleProperty getTotal(){
+        return total;
+    }
+    public SimpleDoubleProperty getTotalNoIVA(){
+        return totalNoIVA;
+    }
+    public HBox getTypeButtons() {
+        return typeButtons;
+    }
+    public GridPane getProductPane(){
+        return productPane;
+    }
+    public TableView <ProductVO> getTablaPedido(){
+        return tablaPedido;
+    }
+    public void table(){
+        tablaPedido.refresh();
+    }
+    public TableView<ProductVO> getTable() {
+        return tablaPedido;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 }

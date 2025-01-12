@@ -29,6 +29,6 @@ public class StockVO {
         this.price=price;
     }
     public String toString(){
-        return "Producto: "+productName+ ", cantidad: "+quantity;
+        return "Producto: "+productName+ ", cantidad: "+quantity+", precio: "+price;
     }
 }

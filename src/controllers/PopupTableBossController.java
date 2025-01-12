@@ -14,8 +14,7 @@ import javafx.stage.Stage;
 import models.ProductVO;
 
 
-
-public class PopupTableController {
+public class PopupTableBossController {
     @FXML
     private TableView<Object> popupTabla;
     @FXML
@@ -29,7 +28,7 @@ public class PopupTableController {
     @FXML
     private TableColumn<ProductVO, Void> acciones;
 
-    private InventoryController inventoryController;
+    private BossController bossController;
 
     public void initialize() {
         nombre.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getName()));
@@ -44,13 +43,13 @@ public class PopupTableController {
                     if(producto.getCat()==1){
                         getTableView().getItems().remove(producto);
                         getTableView().refresh();
-                        inventoryController.getTable().getItems().remove(producto);
-                        inventoryController.table();
+                        bossController.getTable().getItems().remove(producto);
+                        bossController.table();
                     }else{
                         producto.setCat(producto.getCat()-1);
                         producto.setPre(producto.getPre()- producto.getPrice());
                         getTableView().refresh();
-                        inventoryController.table();
+                        bossController.table();
                     }
                 });
             }
@@ -73,16 +72,18 @@ public class PopupTableController {
     //Actualiza la tabla del pop up con la referencia del controlador de inventory
     public void handleBackButton(ActionEvent event) {
 
-        if (inventoryController != null) {
-            inventoryController.table();
+        if (bossController != null) {
+            bossController.table();
         }
         // Cierra el popup
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         stage.close();
     }
 
-    public void setInventoryController(InventoryController inventoryController) {
-        this.inventoryController=inventoryController;
+    public void setBossController(BossController bossController) {
+        this.bossController=bossController;
     }
 
 }
+
+

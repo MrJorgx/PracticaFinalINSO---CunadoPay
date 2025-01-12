@@ -6,6 +6,7 @@ public class OrderVO {
     private  int id, numberTable, idWorker, state;
     private  float price;
     private Date date;
+    private String dateString;
 
     //State 0 default en preparacion, 1 servido 2 finalizado
     public OrderVO(int id, int state, float price, Date date, int numberTable, int idWorker) {
@@ -13,6 +14,13 @@ public class OrderVO {
         this.state = state;
         this.price = price;
         this.date = date;
+        this.numberTable = numberTable;
+        this.idWorker = idWorker;
+    }
+    public OrderVO( int state, float price, String date, int numberTable, int idWorker) {
+        this.state = state;
+        this.price = price;
+        this.dateString = date;
         this.numberTable = numberTable;
         this.idWorker = idWorker;
     }
@@ -36,7 +44,9 @@ public class OrderVO {
     public int getIdWorker() {
         return this.idWorker;
     }
-
+    public String getDateString() {
+        return this.dateString;
+    }
     //SET
     public void setId(int id) {
         this.id = id;

@@ -1,12 +1,19 @@
 package models;
 
+import controllers.InventoryController;
+import controllers.LoginController;
+import dao.UserDAO;
+import javafx.scene.control.TableView;
+
 import java.util.Date;
 
 public class BillVO {
-    private int idBill, idTable, idWorker;
+    private int idBill, idTable, idWorker, idOrder;
     private Date date;
     private float price;
-
+    private String dateString;
+    private TableView <ProductVO> tablaPedido;
+    UserDAO userdao= new UserDAO();
     public BillVO(int idBill, Date date, float price,int idTable, int idWorker) {
         this.idBill = idBill;
         this.date = date;
@@ -14,6 +21,21 @@ public class BillVO {
         this.idTable = idTable;
         this.idWorker = idWorker;
     }
+    public BillVO(String date, float price, int idTable, int idWorker, TableView<ProductVO> tablaPedido) {
+        this.dateString = date;
+        this.price = price;
+        this.idTable = idTable;
+        this.idWorker = idWorker;
+        this.tablaPedido=tablaPedido;
+    }
+    public BillVO(int idBill, String date, float price, int idOrder, int idWorker ){
+        this.idBill=idBill;
+        this.dateString=date;
+        this.price=price;
+        this.idOrder=idOrder;
+        this.idWorker=idWorker;
+    }
+
     //GET
     public int getIdBill() {
         return this.idBill;
@@ -45,5 +67,9 @@ public class BillVO {
     }
     public void setIdWorker(int idWorker) {
         this.idWorker=idWorker;
+    }
+
+    public String toString() {
+        return "Id de la venta: "+idBill+", fecha: "+ dateString+ ", importe: "+ price+ ", trabajador que realizo la venta: "+ userdao.getUserNameById(idWorker);
     }
 }
