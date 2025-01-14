@@ -134,6 +134,28 @@ public class TableDAO {
         modify.setScene(add);
         modify.show();
     }
+    public void modifyStateTable(int num){
+        String sql = "UPDATE \"mesa\" SET \"estado\" = ? WHERE \"idMesa\" = ?";
+        try (Connection conn = DatabaseController.main();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, 1);
+            stmt.setInt(2, num);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    public void modifyStateTableToFree(int num){
+        String sql = "UPDATE \"mesa\" SET \"estado\" = ? WHERE \"idMesa\" = ?";
+        try (Connection conn = DatabaseController.main();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, 0);
+            stmt.setInt(2, num);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
     public void modifyCapacityTable(int idTable, int capacity){
         String sql = "UPDATE \"mesa\" SET \"capacidad\" = ? WHERE \"numMesa\" = ?";
         try (Connection conn = DatabaseController.main();
@@ -144,6 +166,21 @@ public class TableDAO {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+    public int showState(int state){
+        String sql = "SELECT \"numMesa\" FROM \"mesa\"WHERE \"state\" = ?";
+        try (Connection conn = DatabaseController.main();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, state);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("numMesa");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1;
     }
     //Muestra botones uno para cada mesa
     public void showTableToDelete(){
@@ -211,4 +248,42 @@ public class TableDAO {
             e.printStackTrace();
         }
     }
+    public int getTableIdByNum(int num){
+        String sql = "SELECT \"idMesa\" FROM \"mesa\" WHERE \"numMesa\" = ?";
+
+        try (Connection conn = DatabaseController.main();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1,num);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("idMesa"); // Devuelve el iduser encontrado
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al buscar el ID de la mesa: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return -1;
+    }
+    public int getState(int id){
+        String sql= "SELECT \"estado\" FROM \"mesa\" WHERE \"idMesa\" = ?";
+
+        try (Connection conn = DatabaseController.main();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1,id);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("estado"); // Devuelve el iduser encontrado
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al buscar el estado de la mesa: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return -1;
+
+    }
+
 }

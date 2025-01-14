@@ -88,7 +88,7 @@ public class StockDAO {
             int idProduct= productdao.getProductIdByName(verify.getProductName());
             int quantity= getStock(idProduct);
             if(quantity< verify.getQuantity()){
-                errores.add("Stock insuficiente para realizar la venta, para el producto: " +verify.getProductName()+ ", Disponible" + quantity + ", Requerido: " + verify.getQuantity() + ", Faltan: "+ (verify.getQuantity()-quantity)+ ")");
+                errores.add("Stock insuficiente para realizar la venta, para el producto: " +verify.getProductName());
             }
         }
         return errores;

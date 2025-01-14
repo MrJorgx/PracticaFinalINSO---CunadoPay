@@ -8,7 +8,7 @@ public class OrderVO {
     private Date date;
     private String dateString;
 
-    //State 0 default en preparacion, 1 servido 2 finalizado
+    //State 0 pagado, 1 pendiente de pago
     public OrderVO(int id, int state, float price, Date date, int numberTable, int idWorker) {
         this.id = id;
         this.state = state;

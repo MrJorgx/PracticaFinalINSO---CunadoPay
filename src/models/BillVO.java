@@ -52,6 +52,9 @@ public class BillVO {
     public int getIdWorker() {
         return this.idWorker;
     }
+    public String getDateString() {
+        return this.dateString;
+    }
     //SET
     public void setIdBill(int idBill) {
         this.idBill=idBill;
@@ -72,4 +75,6 @@ public class BillVO {
     public String toString() {
         return "Id de la venta: "+idBill+", fecha: "+ dateString+ ", importe: "+ price+ ", trabajador que realizo la venta: "+ userdao.getUserNameById(idWorker);
     }
+
+
 }
