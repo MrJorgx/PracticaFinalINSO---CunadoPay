@@ -106,7 +106,7 @@ public class StockDAO {
                 System.err.println("No se pudo actualizar el stock. Verifica si el producto con ID " + idProducto + " existe.");
             }
         } catch (SQLException e) {
-            System.err.println("Error al actualizar el stock: " + e.getMessage());
+            System.err.println(" Error al actualizar el stock: " + e.getMessage());
             e.printStackTrace();
         }
     }
