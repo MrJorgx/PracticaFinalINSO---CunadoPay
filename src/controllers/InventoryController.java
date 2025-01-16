@@ -1,6 +1,6 @@
 package controllers;
 
-import dao.*;
+import models.DAO.*;
 
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -29,10 +29,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import models.BillVO;
-import models.OrderVO;
-import models.ProductVO;
-import models.StockVO;
+import models.VO.BillVO;
+import models.VO.ProductVO;
+import models.VO.StockVO;
 
 public class InventoryController {
     @FXML
@@ -58,26 +57,27 @@ public class InventoryController {
 
     private SimpleDoubleProperty total=new SimpleDoubleProperty(0);
     private SimpleDoubleProperty totalNoIVA=new SimpleDoubleProperty(0);
+    private BossController bossController     ;
+    private ProductController productController;
+    private BillController  billController;
+    private UserController  userController;
+    private TableController tableController;
+    private StockController stockController;
+    private OrderController orderController;
 
-
-    private BillDAO billdao;
-    private ProductDAO productdao;
-    private UserDAO userdao;
-    private TableDAO tabledao;
-    private StockDAO stockdao;
-    private OrderDAO orderdao;
     private static int numMesa=-1;
-    private static String fechaFinal="";
     private static double priceIva=0.0;
+    private static String fechaFinal="";
 
     public void initialize(){
-        productdao=new ProductDAO(this);
-        userdao=new UserDAO();
-        tabledao=new TableDAO();
-        stockdao=new StockDAO();
-        orderdao= new OrderDAO();
-        billdao= new BillDAO();
         String user= MainController.nameUser();
+        bossController = new BossController();
+        productController =new ProductController(this);;
+        billController= new BillController(this);
+        userController= new UserController();
+        tableController= new TableController();
+        stockController =new StockController(this);
+        orderController= new OrderController(this);
         userBy.setText(user);
         userBy.setEditable(false);
         handlerBebidasButton();
@@ -102,7 +102,7 @@ public class InventoryController {
     }
 
     public void handlerBebidasButton(){
-        productdao.loadCategory();
+        productController.loadCategory();
         productPane.setVisible(false);
     }
 
@@ -113,16 +113,15 @@ public class InventoryController {
         PopupTableController controller = loader.getController();
         controller.setInventoryController(this);
         controller.actualizar(FXCollections.observableArrayList(tablaPedido.getItems()));
-
         Stage stage = new Stage();
         stage.setScene(new Scene(root));
         stage.initModality(Modality.APPLICATION_MODAL);
         stage.showAndWait();
         tablaPedido.refresh();
-        productdao.totalPrice();
+        productController.totalPrice();
     }
 
-    public void handlerPay(){
+    public void handlerPay() {
         ObservableList<ProductVO> productSell = tablaPedido.getItems();
         if(productSell.size()==0){
             Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -134,7 +133,7 @@ public class InventoryController {
         }
         List<StockVO> stockList = new ArrayList<>();
         for (ProductVO product : productSell) {
-            StockVO stock = stockdao.change(product);
+            StockVO stock = stockController.change(product);
             if (stock != null) {
                 stockList.add(stock);
             } else {
@@ -147,7 +146,7 @@ public class InventoryController {
             }
         }
         ObservableList<StockVO> observableStockList = FXCollections.observableArrayList(stockList);
-        List<String> errores = stockdao.verifyStock(observableStockList);
+        List<String> errores = stockController.verifyStock(observableStockList);
         if (!errores.isEmpty()) {
             // Si hay errores, mostrar mensaje
             Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -162,22 +161,24 @@ public class InventoryController {
             // Formatear la fecha y hora (opcional)
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
             String fecha = now.format(formatter);
-            int idUser= userdao.getUserIdByName(userBy.getText());
+            int idUser= userController.getUserIdByName(userBy.getText());
+
             if(numMesa==-1){
                 BillVO bill=  new BillVO(fecha,aux,0,idUser, tablaPedido);
-                orderdao.addOrderToTable(0, aux, fecha, 0, idUser);
-                int idOrder= orderdao.getOrderIdByName(0,aux,fecha,0,idUser);
+                orderController.addOrderToTable(0, aux, fecha, 0, idUser);
+                int idOrder= orderController.getOrderIdByName(0,aux,fecha,0,idUser);
                 for (ProductVO product : productSell) {
-                    int id = productdao.getProductIdByName(product.getName());
+                    int id = productController.getProductIdByName(product.getName());
                     if (id != -1) {
                         float totalUni=product.getCat()*product.getPrice();
-                        orderdao.lineaPedido(id, product.getCat(), product.getPrice(), totalUni, idOrder);
+                        orderController.lineaPedido(id, product.getCat(), product.getPrice(), totalUni, idOrder);
                     }
                 }
-                orderdao.realizarVenta(observableStockList);
-                billdao.addTicket(fecha, aux, idOrder, idUser);
-                billdao.generarTicket(bill,idOrder);
-                tabledao.modifyStateTableToFree(0);
+                orderController.realizarVenta(observableStockList);
+                BillVO billVO =new BillVO(fecha,aux,0,idUser, tablaPedido);
+                billController.addTicket(fecha, aux, idOrder, idUser);
+                billController.generarTicket(bill,idOrder);
+                tableController.modifyStateTableToFree(0);
                 tablaPedido.getItems().clear();
                 total.set(0.00);
                 totalNoIVA.set(0.00);
@@ -186,17 +187,18 @@ public class InventoryController {
                 priceIva=0.0;
             }else{
                 BillVO bill=  new BillVO(fechaFinal,aux,numMesa,idUser, tablaPedido);
-                int idOrder= orderdao.getOrderIdByFecha(fechaFinal);
-                billdao.addTicket(fecha, aux, idOrder, idUser);
-                billdao.generarTicket(bill,idOrder);
-                int idMesa= tabledao.getTableIdByNum(numMesa);
-                tabledao.modifyStateTableToFree(idMesa);
-                orderdao.modifyStateOrder(fechaFinal);
+
+                int idOrder= orderController.getOrderIdByFecha(fechaFinal);
+                billController.addTicket(fecha, aux, idOrder, idUser);
+                billController.generarTicket(bill,idOrder);
+                int idMesa= tableController.getTableIdByNum(numMesa);
+                tableController.modifyStateTableToFree(idMesa);
+                orderController.modifyStateOrder(fechaFinal);
                 tablaPedido.getItems().clear();
                 total.set(0.00);
                 totalNoIVA.set(0.00);
-                numMesa=-1;
                 fechaFinal="";
+                numMesa=-1;
                 priceIva=0.0;
             }
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -225,7 +227,7 @@ public class InventoryController {
                     alert.showAndWait();
                 } else {
                     for (ProductVO product : productSell) {
-                        StockVO stock = stockdao.change(product);
+                        StockVO stock = stockController.change(product);
                         if (stock != null) {
                             stockList.add(stock);
                         } else {
@@ -239,7 +241,7 @@ public class InventoryController {
                     }
                     ObservableList<StockVO> observableStockList = FXCollections.observableArrayList(stockList);
 
-                    List<String> errores = stockdao.verifyStock(observableStockList);
+                    List<String> errores = stockController.verifyStock(observableStockList);
                     if (!errores.isEmpty()) {
                         // Si hay errores, mostrar mensaje
                         Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -262,9 +264,9 @@ public class InventoryController {
                             return;
                         }
 
-                        int idTable = tabledao.getTableIdByNum(tableNumber);
-                        int idUser = userdao.getUserIdByName(userBy.getText());
-                        int state = tabledao.getState(idTable);
+                        int idTable = tableController.getTableIdByNum(tableNumber);
+                        int idUser = userController.getUserIdByName(userBy.getText());
+                        int state = tableController.getState(idTable);
                         if (state != 0) {
                             Alert alert = new Alert(Alert.AlertType.ERROR);
                             alert.setTitle("Error");
@@ -274,14 +276,14 @@ public class InventoryController {
                             return;
                         }
                         //Comprobar que la mesa el estado es 0 si no ostias
-                        orderdao.addOrderToTable(idTable, aux, fecha, 1, idUser);
-
-                        int idOrder= orderdao.getOrderIdByName(1,aux,fecha,idTable,idUser);
+                        orderController.addOrderToTable(idTable, aux, fecha, 1, idUser);
+                        fechaFinal=fecha;
+                        int idOrder= orderController.getOrderIdByName(1,aux,fecha,idTable,idUser);
                         for (ProductVO product : productSell) {
-                            int id = productdao.getProductIdByName(product.getName());
+                            int id = productController.getProductIdByName(product.getName());
                             if (id != -1) {
                                 float totalUni=product.getCat()*product.getPrice();
-                                orderdao.lineaPedido(id, product.getCat(), product.getPrice(), totalUni, idOrder);
+                                orderController.lineaPedido(id, product.getCat(), product.getPrice(), totalUni, idOrder);
                             }
                         }
                         tablaPedido.getItems().clear();
@@ -303,6 +305,7 @@ public class InventoryController {
             }
         });
     }
+
 
     public void handlerAddOrderToTablePay(ActionEvent event) throws IOException {
         // Crear un diálogo o una ventana emergente
@@ -332,11 +335,15 @@ public class InventoryController {
                     //manejar pago
                     tablaPedido.getItems().clear();
                     numMesa=numeroMesa;
-                    System.out.println();
-                    List<ProductVO> products= recuperar(idMesa);
+                    System.out.println("MEsa:" +numMesa);
+
+                    List<ProductVO> products= productController.recuperar(idMesa);
                     if (products != null && !products.isEmpty()) {
                         ObservableList<ProductVO> observableProducts = FXCollections.observableArrayList(products);
                         // Agregar la lista observable al TableView
+                        for(ProductVO product: products){
+                            priceIva=priceIva+product.getPre();
+                        }
                         tablaPedido.setItems(observableProducts);
                         // Opcional: refrescar la tabla para asegurarse de que los datos se muestren
                         tablaPedido.refresh();
@@ -366,38 +373,7 @@ public class InventoryController {
         stage.showAndWait();
     }
 
-    private List<ProductVO> recuperar(int idMesa) {
-        String sql = "SELECT lp.\"idProducto\", lp.\"cantidad\", lp.\"precioUnitario\",  pd.\"idPedido\", pd.\"fecha\" FROM  \"lineaPedido\" lp INNER JOIN \"pedido\" pd ON lp.\"idPedido\" = pd.\"idPedido\" WHERE pd.\"estado\" = 1 AND pd.\"numMesa\" = ?";
-        List<ProductVO> productos = new ArrayList<>();
-        try (Connection conn = DatabaseController.main();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setInt(1, idMesa);
-            System.out.println(stmt);
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    System.out.println("Llegue");
-                    int cantidad = rs.getInt("cantidad");
-                    float precioUnitario = rs.getFloat("precioUnitario");
-                    int idProducto = rs.getInt("idProducto");
-                    String fecha= rs.getString("fecha");
-                    fechaFinal=fecha;
-                    float pricef= cantidad*precioUnitario;
-                    String name= productdao.getProductNameById(idProducto);
-                    // Crear un objeto ProductoVO con los datos obtenidos
-                    ProductVO producto = new ProductVO(name, cantidad, precioUnitario, 0);
-                    producto.setPre(pricef);
-                    productos.add(producto);
-                    priceIva= priceIva+ cantidad*precioUnitario;
-                }
-
-
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Error al recuperar productos por mesa: " + e.getMessage(), e);
-        }
-        return productos;
-    }
     public SimpleDoubleProperty getTotal(){
         return total;
     }
@@ -419,15 +395,5 @@ public class InventoryController {
     public TableView<ProductVO> getTable() {
         return tablaPedido;
     }
-
-
-
-
-
-
-
-
-
-
 
 }

@@ -26,7 +26,7 @@ public class DatabaseController {
             controller.connection = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
             controller.statement = controller.connection.createStatement();
             controller.statement.executeQuery("SELECT 1"); // Esto asegura que la conexión sea válida
-            System.out.println("Se ha conectado de forma correcta con la base de datos");
+            //System.out.println("Se ha conectado de forma correcta con la base de datos");
 
             // Devolver la conexión a la base de datos
             return controller.connection;

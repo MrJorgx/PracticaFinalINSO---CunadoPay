@@ -1,4 +1,11 @@
-package models;
+package models.VO;
+
+import controllers.DatabaseController;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class  UserVO {
     private String name, password;

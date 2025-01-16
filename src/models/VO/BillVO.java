@@ -1,8 +1,6 @@
-package models;
+package models.VO;
 
-import controllers.InventoryController;
-import controllers.LoginController;
-import dao.UserDAO;
+import models.DAO.UserDAO;
 import javafx.scene.control.TableView;
 
 import java.util.Date;

@@ -1,9 +1,7 @@
 package controllers;
 
-import dao.*;
+import models.DAO.*;
 import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleFloatProperty;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -36,11 +34,10 @@ import java.util.List;
 import java.util.Optional;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TextInputDialog;
-import models.BillVO;
-import models.OrderVO;
-import models.ProductVO;
-import models.StockVO;
-import static dao.UserDAO.getNameUserBoss;
+import models.VO.BillVO;
+import models.VO.ProductVO;
+import models.VO.StockVO;
+import static models.DAO.UserDAO.getNameUserBoss;
 
 
 public class BossController {
@@ -67,22 +64,24 @@ public class BossController {
 
     private SimpleDoubleProperty total=new SimpleDoubleProperty(0);
     private SimpleDoubleProperty totalNoIVA=new SimpleDoubleProperty(0);
-    private BillDAO billdao=new BillDAO();
-    private ProductDAO productdao;
-    private UserDAO userdao;
-    private TableDAO tabledao;
-    private StockDAO stockdao;
-    private OrderDAO orderdao;
+    private BillController billController       ;
+    private ProductController productController ;
+    private UserController userController       ;
+    private TableController tableController     ;
+    private StockController stockController     ;
+    private OrderController orderController     ;
+
     private final int MAX_TABLE=10;
     private static int numMesa=-1;
-    private static String fechaFinal="";
     private static double priceIva=0.0;
+    private static  String fechaFinal="";
     public void initialize(){
-        productdao=new ProductDAO(this);
-        userdao=new UserDAO();
-        tabledao=new TableDAO();
-        stockdao=new StockDAO();
-        orderdao= new OrderDAO();
+        billController=new BillController(this);
+        productController=new ProductController(this);
+        userController=new UserController();
+        tableController=new TableController();
+        stockController=new StockController(this);
+        orderController= new OrderController(this);
         String user=getNameUserBoss();
         userBy.setText(user);
         userBy.setEditable(false);
@@ -97,7 +96,7 @@ public class BossController {
     }
 
     public void handlerBebidasButton(){
-        productdao.loadCategory();
+        productController.loadCategory();
         productPane.setVisible(false);
     }
 
@@ -114,7 +113,7 @@ public class BossController {
         stage.initModality(Modality.APPLICATION_MODAL);
         stage.showAndWait();
         tablaPedido.refresh();
-        productdao.totalPrice();
+        productController.totalPrice();
     }
 
     public void handlerPay(){
@@ -129,7 +128,7 @@ public class BossController {
         }
         List<StockVO> stockList = new ArrayList<>();
         for (ProductVO product : productSell) {
-            StockVO stock = stockdao.change(product);
+            StockVO stock = stockController.change(product);
             if (stock != null) {
                 stockList.add(stock);
             } else {
@@ -142,7 +141,7 @@ public class BossController {
             }
         }
         ObservableList<StockVO> observableStockList = FXCollections.observableArrayList(stockList);
-        List<String> errores = stockdao.verifyStock(observableStockList);
+        List<String> errores = stockController.verifyStock(observableStockList);
         if (!errores.isEmpty()) {
             // Si hay errores, mostrar mensaje
             Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -157,22 +156,24 @@ public class BossController {
             // Formatear la fecha y hora (opcional)
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
             String fecha = now.format(formatter);
-            int idUser= userdao.getUserIdByName(userBy.getText());
+            int idUser= userController.getUserIdByName(userBy.getText());
+
             if(numMesa==-1){
                 BillVO bill=  new BillVO(fecha,aux,0,idUser, tablaPedido);
-                orderdao.addOrderToTable(0, aux, fecha, 0, idUser);
-                int idOrder= orderdao.getOrderIdByName(0,aux,fecha,0,idUser);
+                orderController.addOrderToTable(0, aux, fecha, 0, idUser);
+                int idOrder= orderController.getOrderIdByName(0,aux,fecha,0,idUser);
                 for (ProductVO product : productSell) {
-                    int id = productdao.getProductIdByName(product.getName());
+                    int id = productController.getProductIdByName(product.getName());
                     if (id != -1) {
                         float totalUni=product.getCat()*product.getPrice();
-                        orderdao.lineaPedido(id, product.getCat(), product.getPrice(), totalUni, idOrder);
+                        orderController.lineaPedido(id, product.getCat(), product.getPrice(), totalUni, idOrder);
                     }
                 }
-                orderdao.realizarVenta(observableStockList);
-                billdao.addTicket(fecha, aux, idOrder, idUser);
-                billdao.generarTicket(bill,idOrder);
-                tabledao.modifyStateTableToFree(0);
+                orderController.realizarVenta(observableStockList);
+                BillVO billVO =new BillVO(fecha,aux,0,idUser, tablaPedido);
+                billController.addTicket(fecha, aux, idOrder, idUser);
+                billController.generarTicket(bill,idOrder);
+                tableController.modifyStateTableToFree(0);
                 tablaPedido.getItems().clear();
                 total.set(0.00);
                 totalNoIVA.set(0.00);
@@ -181,17 +182,18 @@ public class BossController {
                 priceIva=0.0;
             }else{
                 BillVO bill=  new BillVO(fechaFinal,aux,numMesa,idUser, tablaPedido);
-                int idOrder= orderdao.getOrderIdByFecha(fechaFinal);
-                billdao.addTicket(fecha, aux, idOrder, idUser);
-                billdao.generarTicket(bill,idOrder);
-                int idMesa= tabledao.getTableIdByNum(numMesa);
-                tabledao.modifyStateTableToFree(idMesa);
-                orderdao.modifyStateOrder(fechaFinal);
+
+                int idOrder= orderController.getOrderIdByFecha(fechaFinal);
+                billController.addTicket(fecha, aux, idOrder, idUser);
+                billController.generarTicket(bill,idOrder);
+                int idMesa= tableController.getTableIdByNum(numMesa);
+                tableController.modifyStateTableToFree(idMesa);
+                orderController.modifyStateOrder(fechaFinal);
                 tablaPedido.getItems().clear();
                 total.set(0.00);
                 totalNoIVA.set(0.00);
-                numMesa=-1;
                 fechaFinal="";
+                numMesa=-1;
                 priceIva=0.0;
             }
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -211,7 +213,7 @@ public class BossController {
 
         // Crear la lista de productos
         ListView<ProductVO> showList = new ListView<>();
-        ObservableList<ProductVO> allProducts = productdao.showAllProducts();
+        ObservableList<ProductVO> allProducts = productController.showAllProducts();
 
         if (allProducts != null && !allProducts.isEmpty()) {
             showList.setItems(allProducts);
@@ -292,7 +294,7 @@ public class BossController {
                     error.setContentText("Introduzca el precio de forma correcta.");
                     error.showAndWait();
                 } else {
-                    if(productdao.comprobarProduct(name)){
+                    if(productController.comprobarProduct(name)){
                         Alert error = new Alert(Alert.AlertType.ERROR);
                         error.setTitle("Error");
                         error.setHeaderText(null);
@@ -309,9 +311,9 @@ public class BossController {
                             intro = 3;
                         }
                         Float auxPrice = Float.parseFloat(price);  // Conversión a float
-                        productdao.addProduct(name,intro, auxPrice ,url);
-                        int idUser= productdao.getProductIdByName(name);
-                        stockdao.addToStock(idUser,auxPrice,50);
+                        productController.addProduct(name,intro, auxPrice ,url);
+                        int idUser= productController.getProductIdByName(name);
+                        stockController.addToStock(idUser,auxPrice,50);
                         Alert mostrar = new Alert(Alert.AlertType.INFORMATION);
                         mostrar.setTitle("Correcto");
                         mostrar.setHeaderText(null);
@@ -380,14 +382,14 @@ public class BossController {
             String password = credentials.getValue();
 
             if (!name.trim().isEmpty() && !password.trim().isEmpty()) {
-                if (userdao.comprobar(name)) {
+                if (userController.comprobar(name)) {
                     Alert error = new Alert(Alert.AlertType.ERROR);
                     error.setTitle("Error");
                     error.setHeaderText(null);
                     error.setContentText("Ya existe un usuario en la base de datos con ese nombre");
                     error.showAndWait();
                 } else {
-                    userdao.createBoss(name, password, 1);
+                    userController.createBoss(name, password, 1);
                     Alert mostrar = new Alert(Alert.AlertType.INFORMATION);
                     mostrar.setTitle("Correcto");
                     mostrar.setHeaderText(null);
@@ -418,11 +420,11 @@ public class BossController {
         table.showAndWait().ifPresent(action -> {
             if (action == addButtonTable) {
                 System.out.println("Opción seleccionada: Añadir mesa");
-                int actualCapacity= tabledao.countTables();
+                int actualCapacity= tableController.countTables();
                 //La barra (mesa0 )no cuenta
                 actualCapacity=actualCapacity-1;
                 if(actualCapacity<MAX_TABLE){
-                    tabledao.addTable(actualCapacity+1);
+                    tableController.addTable(actualCapacity+1);
                 }else{
                     errorAlert.setTitle("Error");
                     errorAlert.setHeaderText("Error al añadir la mesa");
@@ -431,7 +433,7 @@ public class BossController {
                 }
             } else if (action == manageButtonTable) {
                 System.out.println("Opción seleccionada: Gestionar mesas");
-                tabledao.manageTables();
+                tableController.manageTables();
             } else {
                 System.out.println("Opción seleccionada: Cancelar");
                 // Opcional: lógica para cancelar
@@ -447,14 +449,14 @@ public class BossController {
         Optional<String> result = add.showAndWait();
         result.ifPresent(name-> {
             if(!name.trim().isEmpty()){
-                if(userdao.comprobar(name)){
+                if(userController.comprobar(name)){
                     Alert error  = new Alert(Alert.AlertType.ERROR);
                     error.setTitle("Error");
                     error.setHeaderText(null);
                     error.setContentText("Ya existe el empleado con ese nombre");
                     error.showAndWait();
                 }else {
-                    userdao.createUser(name, null);
+                    userController.createUser(name, null);
                     Alert mostrar = new Alert(Alert.AlertType.INFORMATION);
                     mostrar.setTitle("Correcto");
                     mostrar.setHeaderText(null);
@@ -476,7 +478,7 @@ public class BossController {
         list.setTitle("Historial de Ventas");
         list.setHeaderText("Listado de ventas realizadas");
         list.setResizable(true);
-        List<BillVO> all = billdao.getAllBill();
+        List<BillVO> all = billController.getAllBill();
         ListView<BillVO> showList = new ListView<>();
         ObservableList<BillVO> observableList = FXCollections.observableArrayList(all);
         if (observableList != null && !observableList.isEmpty()) {
@@ -510,7 +512,7 @@ public class BossController {
         list.setHeaderText("Stock disponible");
         list.setResizable(true);
         ListView<StockVO> showList = new ListView<>();
-        ObservableList<StockVO> allProducts = stockdao.showAllStock();
+        ObservableList<StockVO> allProducts = stockController.showAllStock();
 
         if (allProducts != null && !allProducts.isEmpty()) {
             showList.setItems(allProducts);
@@ -565,7 +567,7 @@ public class BossController {
                     alert.showAndWait();
                 } else {
                     for (ProductVO product : productSell) {
-                        StockVO stock = stockdao.change(product);
+                        StockVO stock = stockController.change(product);
                         if (stock != null) {
                             stockList.add(stock);
                         } else {
@@ -579,7 +581,7 @@ public class BossController {
                     }
                     ObservableList<StockVO> observableStockList = FXCollections.observableArrayList(stockList);
 
-                    List<String> errores = stockdao.verifyStock(observableStockList);
+                    List<String> errores = stockController.verifyStock(observableStockList);
                     if (!errores.isEmpty()) {
                         // Si hay errores, mostrar mensaje
                         Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -602,9 +604,9 @@ public class BossController {
                             return;
                         }
 
-                        int idTable = tabledao.getTableIdByNum(tableNumber);
-                        int idUser = userdao.getUserIdByName(userBy.getText());
-                        int state = tabledao.getState(idTable);
+                        int idTable = tableController.getTableIdByNum(tableNumber);
+                        int idUser = userController.getUserIdByName(userBy.getText());
+                        int state = tableController.getState(idTable);
                         if (state != 0) {
                             Alert alert = new Alert(Alert.AlertType.ERROR);
                             alert.setTitle("Error");
@@ -614,14 +616,14 @@ public class BossController {
                             return;
                         }
                         //Comprobar que la mesa el estado es 0 si no ostias
-                        orderdao.addOrderToTable(idTable, aux, fecha, 1, idUser);
-
-                        int idOrder= orderdao.getOrderIdByName(1,aux,fecha,idTable,idUser);
+                        orderController.addOrderToTable(idTable, aux, fecha, 1, idUser);
+                        fechaFinal=fecha;
+                        int idOrder= orderController.getOrderIdByName(1,aux,fecha,idTable,idUser);
                         for (ProductVO product : productSell) {
-                            int id = productdao.getProductIdByName(product.getName());
+                            int id = productController.getProductIdByName(product.getName());
                             if (id != -1) {
                                 float totalUni=product.getCat()*product.getPrice();
-                                orderdao.lineaPedido(id, product.getCat(), product.getPrice(), totalUni, idOrder);
+                                orderController.lineaPedido(id, product.getCat(), product.getPrice(), totalUni, idOrder);
                             }
                         }
                         tablaPedido.getItems().clear();
@@ -672,11 +674,15 @@ public class BossController {
                     //manejar pago
                     tablaPedido.getItems().clear();
                     numMesa=numeroMesa;
-                    System.out.println();
+                    System.out.println("MEsa:" +numMesa);
+
                     List<ProductVO> products= recuperar(idMesa);
                     if (products != null && !products.isEmpty()) {
                         ObservableList<ProductVO> observableProducts = FXCollections.observableArrayList(products);
                         // Agregar la lista observable al TableView
+                        for(ProductVO product: products){
+                            priceIva=priceIva+product.getPre();
+                        }
                         tablaPedido.setItems(observableProducts);
                         // Opcional: refrescar la tabla para asegurarse de que los datos se muestren
                         tablaPedido.refresh();
@@ -706,37 +712,9 @@ public class BossController {
         stage.showAndWait();
     }
 
+
     private List<ProductVO> recuperar(int idMesa) {
-        String sql = "SELECT lp.\"idProducto\", lp.\"cantidad\", lp.\"precioUnitario\",  pd.\"idPedido\", pd.\"fecha\" FROM  \"lineaPedido\" lp INNER JOIN \"pedido\" pd ON lp.\"idPedido\" = pd.\"idPedido\" WHERE pd.\"estado\" = 1 AND pd.\"numMesa\" = ?";
-        List<ProductVO> productos = new ArrayList<>();
-        try (Connection conn = DatabaseController.main();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setInt(1, idMesa);
-            System.out.println(stmt);
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    System.out.println("Llegue");
-                    int cantidad = rs.getInt("cantidad");
-                    float precioUnitario = rs.getFloat("precioUnitario");
-                    int idProducto = rs.getInt("idProducto");
-                    String fecha= rs.getString("fecha");
-                    fechaFinal=fecha;
-                    float pricef= cantidad*precioUnitario;
-                    String name= productdao.getProductNameById(idProducto);
-                    // Crear un objeto ProductoVO con los datos obtenidos
-                    ProductVO producto = new ProductVO(name, cantidad, precioUnitario, 0);
-                    producto.setPre(pricef);
-                    productos.add(producto);
-                    priceIva= priceIva+ cantidad*precioUnitario;
-                }
-
-
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Error al recuperar productos por mesa: " + e.getMessage(), e);
-        }
-            return productos;
+        return productController.recuperar(idMesa);
     }
 
 
@@ -748,7 +726,7 @@ public class BossController {
         return totalNoIVA;
     }
     public HBox getTypeButtons() {
-        return typeButtons;
+        return this.typeButtons;
     }
     public GridPane getProductPane(){
         return productPane;

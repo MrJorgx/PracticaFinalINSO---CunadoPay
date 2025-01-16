@@ -1,4 +1,4 @@
-package models;
+package models.VO;
 
 import javafx.beans.property.SimpleFloatProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -36,6 +36,7 @@ public class ProductVO {
         this.pre = new SimpleFloatProperty(price);
         this.category=category;
     }
+    public ProductVO(){}
 
     //Categorias 0-bebidas, 1-cafe 2-comidas 3-postres
     public void setCat(int cat) {

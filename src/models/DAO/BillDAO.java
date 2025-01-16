@@ -1,26 +1,34 @@
-package dao;
+package models.DAO;
 
-import controllers.DatabaseController;
-import controllers.InventoryController;
+import controllers.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.TextArea;
-import models.BillVO;
-import models.ProductVO;
+import models.VO.BillVO;
+import models.VO.ProductVO;
+import models.VO.UserVO;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class BillDAO {
 
-    InventoryController inventoryController =new InventoryController();
-    ProductDAO productodao= new ProductDAO(inventoryController);
-    UserDAO userDAO= new UserDAO();
+    public BillDAO(BossController boss){
+        this.productController = new ProductController(boss);
+    }
+    public BillDAO(InventoryController inventoryController){
+        this.productController = new ProductController(inventoryController);
+    }
+    public ProductController productController;
+
+
     public ObservableList<BillVO> getAllBill() {
         ObservableList<BillVO> bill = FXCollections.observableArrayList();
         String sql = "SELECT \"idFactura\" , \"fecha\", \"total\",\"idPedido\",\"idUser\"  FROM \"factura\"";
@@ -62,34 +70,10 @@ public class BillDAO {
             return false;
         }
     }
-    public void generarTicket(BillVO bill, int idOrder) {
-        // Crear un cuadro de diálogo
-        Dialog<String> dialog = new Dialog<>();
-        dialog.setTitle("Factura Generada");
-        dialog.setHeaderText("Detalles de la Factura");
-        TextArea textArea = new TextArea();
-        textArea.setEditable(false);
-        textArea.setWrapText(true);
 
-        StringBuilder ticketContent = new StringBuilder();
-        ticketContent.append("Fecha: ").append(bill.getDateString()).append("\n");
-        ticketContent.append("Total: ").append(String.format("%.2f", bill.getPrice())).append(" €\n");
-        ticketContent.append("Atendido por: ").append(userDAO.getUserNameById(bill.getIdWorker())).append("\n");
-        ticketContent.append("Productos:\n");
-        getProductos(idOrder, ticketContent);
-
-        textArea.setText(ticketContent.toString());
-        // Añadir el área de texto al diálogo
-        dialog.getDialogPane().setContent(textArea);
-        // Añadir un botón de "Aceptar"
-        ButtonType acceptButton = new ButtonType("Aceptar", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().add(acceptButton);
-        // Mostrar el diálogo y esperar a que el usuario lo cierre
-        dialog.showAndWait();
-    }
-
-    private void getProductos(int idOrder, StringBuilder ticketContent) {
+    public List<ProductVO> getProductos(int idOrder, StringBuilder ticketContent) {
         // Array para almacenar productos
+        List<ProductVO> bill = new ArrayList<>();
         String sql = "SELECT \"idProducto\" ,\"cantidad\" ,\"precioUnitario\" FROM \"lineaPedido\" WHERE \"idPedido\" = ?";
         try (Connection conn = DatabaseController.main();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -101,14 +85,9 @@ public class BillDAO {
                     int idProducto = rs.getInt("idProducto");
                     float precio = rs.getFloat("precioUnitario");
                     int cantidad = rs.getInt("cantidad");
-                    ticketContent.append("- ")
-                            .append(productodao.getProductNameById(idProducto))
-                            .append(" x")
-                            .append(cantidad)
-                            .append(" (")
-                            .append(String.format("%.2f", precio))
-                            .append(" €/u): \n")
-                            ;
+                    String name = productController.getProductNameById(idProducto);
+                    ProductVO add = new ProductVO(name, cantidad, precio);
+                    bill.add(add);
                 }
             }
 
@@ -117,6 +96,7 @@ public class BillDAO {
             System.err.println("Error al obtener los productos: " + e.getMessage());
             e.printStackTrace();
         }
+        return bill;
     }
 
 }

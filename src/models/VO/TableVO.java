@@ -1,12 +1,26 @@
-package models;
+package models.VO;
+
+import controllers.DatabaseController;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+
 public class TableVO {
-    private int id,state, capacity, idOrder;
+    private int id,state, capacity, idOrder, numMesa;
     //Declaración
-    public TableVO(int id, int state, int capacity, int idOrder) {
+    public TableVO(int id, int state, int capacity, int idOrder, int numMesa) {
         this.id = id;
         this.state = state;
         this.capacity = capacity;
         this.idOrder = idOrder;
+        this.numMesa = numMesa;
+    }
+
+    public TableVO(int state, int capacity, int numMesa) {
+        this.state = state;
+        this.capacity = capacity;
+        this.numMesa = numMesa;
     }
     //State: 0- disponible 1-reservada 2-ocupada
 
@@ -23,6 +37,7 @@ public class TableVO {
     public int getIdOrder() {
         return this.idOrder;
     }
+    public int getNumMesa() { return this.numMesa;}
     //SET
     public void setCapacity(int capacity) {
         this.capacity = capacity;
@@ -36,9 +51,9 @@ public class TableVO {
     public  void setIdOrder(int idOrder) {
         this.idOrder = idOrder;
     }
-    public String toString(){
-        return "Numero de mesa: "+id+ ", capacidad: "+capacity+ ", Estado de la mesa: "+state;
+    public void setNumMesa(int numMesa) {this.numMesa = numMesa;}
+    public String toString() {
+        return "Numero de mesa: " + numMesa + ", capacidad: " + capacity + ", Estado de la mesa: " + state;
     }
-
 
 }

@@ -11,7 +11,7 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.stage.Stage;
-import models.ProductVO;
+import models.VO.ProductVO;
 
 
 public class PopupTableBossController {
@@ -28,7 +28,7 @@ public class PopupTableBossController {
     @FXML
     private TableColumn<ProductVO, Void> acciones;
 
-    private BossController bossController;
+    private BossController bossController = new BossController();
 
     public void initialize() {
         nombre.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getName()));

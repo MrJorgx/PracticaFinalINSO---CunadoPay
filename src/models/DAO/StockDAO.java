@@ -1,10 +1,13 @@
-package dao;
+package models.DAO;
 
+import controllers.BossController;
 import controllers.DatabaseController;
+import controllers.InventoryController;
+import controllers.ProductController;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import models.ProductVO;
-import models.StockVO;
+import models.VO.ProductVO;
+import models.VO.StockVO;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -14,15 +17,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StockDAO {
-    ProductDAO productdao;
-    OrderDAO orderdao;
-    public StockDAO() {
-        this.productdao= new ProductDAO(this);
-    }
-    public StockDAO(OrderDAO orderdao){
-        this.orderdao=orderdao;
-    }
 
+    private ProductController productController;
+    public StockDAO(BossController bc){
+        this.productController=new ProductController(bc);
+    }
+    public StockDAO(InventoryController inventoryController){
+        this.productController= new ProductController(inventoryController);
+    }
     public boolean addToStock(int idproduct,  float price, int  quantity) {
         String sql = "INSERT INTO \"inventario\" (\"idProducto\", \"cantidadDisponible\", \"precio\") VALUES (?, ?, ?)";
         try (Connection conn = DatabaseController.main();
@@ -49,7 +51,7 @@ public class StockDAO {
                 int id = rs.getInt("idProducto");
                 int quantity = rs.getInt("cantidadDisponible");
                 float price= rs.getFloat("precio");
-                String nombre=productdao.getProductNameById(id);
+                String nombre=productController.getProductNameById(id);
                 StockVO add = new StockVO(nombre, quantity,price);
                 stock.add(add);
             }
@@ -75,7 +77,7 @@ public class StockDAO {
         return -1;
     }
     public StockVO change(ProductVO product){
-        int idPro= productdao.getProductIdByName(product.getName());
+        int idPro= productController.getProductIdByName(product.getName());
         if(idPro==-1){
             return null;
         }
@@ -85,7 +87,7 @@ public class StockDAO {
     public List<String> verifyStock(ObservableList<StockVO> productFind){
         List<String> errores = new ArrayList<>();
         for(StockVO verify : productFind){
-            int idProduct= productdao.getProductIdByName(verify.getProductName());
+            int idProduct= productController.getProductIdByName(verify.getProductName());
             int quantity= getStock(idProduct);
             if(quantity< verify.getQuantity()){
                 errores.add("Stock insuficiente para realizar la venta, para el producto: " +verify.getProductName());
@@ -106,7 +108,7 @@ public class StockDAO {
                 System.err.println("No se pudo actualizar el stock. Verifica si el producto con ID " + idProducto + " existe.");
             }
         } catch (SQLException e) {
-            System.err.println(" Error al actualizar el stock: " + e.getMessage());
+            System.err.println("Error al actualizar el stock: " + e.getMessage());
             e.printStackTrace();
         }
     }

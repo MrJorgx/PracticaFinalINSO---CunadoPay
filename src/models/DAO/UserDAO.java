@@ -1,7 +1,7 @@
-package dao;
+package models.DAO;
 
 import controllers.DatabaseController;
-import models.UserVO;
+import models.VO.UserVO;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UserDAO {
+
 
     private static String nameUserBoss;
     //Metodo que  devuelve true si existe ya el usuario en la base de datos
@@ -142,5 +143,22 @@ public class UserDAO {
             e.printStackTrace();
         }
         return UserList;
+    }
+
+    public boolean check(String name){
+        String sql = "SELECT COUNT(*) FROM \"user\" WHERE \"name\" = ?";
+        try (Connection conn = DatabaseController.main();
+             PreparedStatement checkStmt = conn.prepareStatement(sql)) {
+            checkStmt.setString(1, name);
+            ResultSet rs = checkStmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+            return false;
+        } catch (SQLException e) {
+            System.err.println("Error al comprobar el usuario en la base de datos: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
     }
 }

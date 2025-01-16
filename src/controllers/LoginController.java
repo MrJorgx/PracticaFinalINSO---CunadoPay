@@ -1,6 +1,6 @@
 package controllers;
 
-import dao.UserDAO;
+import models.DAO.UserDAO;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -21,7 +21,7 @@ public class LoginController {
     @FXML
     private PasswordField passwordLog;
 
-    private UserDAO userdao= new UserDAO();
+    private UserController userController = new UserController();
 
     public void handleBackButton(ActionEvent event) throws IOException {
         Parent homePage = FXMLLoader.load(getClass().getResource("/views/main.fxml"));
@@ -35,9 +35,11 @@ public class LoginController {
 
     //Modificar ruta a cosas que solo pueda hacer el jefe
     public void handleLoginButton(ActionEvent event) throws IOException{
+
         String username= userLog.getText();
         String password= passwordLog.getText();
-        if(userdao.userOk(username,password)){
+
+        if(userController.userOk(username,password)){
             Alert info= new Alert(Alert.AlertType.INFORMATION);
             info.setTitle("Inicion de sesion correcto");
             info.setHeaderText(null);
@@ -59,7 +61,5 @@ public class LoginController {
             error.showAndWait();
         }
     }
-
-
 
 }

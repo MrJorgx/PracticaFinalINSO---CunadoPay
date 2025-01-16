@@ -1,4 +1,4 @@
-package dao;
+package models.DAO;
 
 import controllers.DatabaseController;
 import javafx.geometry.Insets;
@@ -10,6 +10,8 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import models.VO.ProductVO;
+import models.VO.TableVO;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -20,51 +22,25 @@ import java.util.List;
 import java.util.Optional;
 
 public class TableDAO {
-    public void addTable(int numMesa) {
-        Alert errorAlert = new Alert(Alert.AlertType.ERROR);
-        TextInputDialog add = new TextInputDialog();
-        add.setTitle("Añadir mesa");
-        add.setHeaderText("Nueva mesa");
-        add.setContentText("Introduce la capacidad de la mesa");
-        //Permite un campo null o no
-        Optional<String> result = add.showAndWait();
-        result.ifPresent(capacidad -> {
-            try {
-                int capacidadMesa = Integer.parseInt(capacidad);
-                if (capacidadMesa > 0) {
-                    System.out.println("Capacidad de la mesa añadida: " + capacidadMesa);
-                    setTable(capacidadMesa,0,numMesa);
-                } else {
-                    errorAlert.setTitle("Error");
-                    errorAlert.setHeaderText("Entrada inválida");
-                    errorAlert.setContentText("La capacidad debe ser mayor que 0.");
-                    errorAlert.showAndWait();
-                }
-            } catch (NumberFormatException e) {
-                errorAlert.setTitle("Error");
-                errorAlert.setHeaderText("Entrada inválida");
-                errorAlert.setContentText("Por favor, introduce un número válido.");
-                errorAlert.showAndWait();
-            }
-        });
-    }
-    public boolean setTable(int capacity, int state, int numMesa) {
-        String sql= "INSERT INTO \"mesa\" (\"capacidad\", \"estado\",\"numMesa\") VALUES (?,?,?)";
+
+
+
+    public void addTable(int numMesa,int capacity, int state) {
+        String sql = "INSERT INTO \"mesa\" (\"numMesa\", \"capacidad\", \"estado\") VALUES (?, ?, ?)";
+
         try (Connection conn = DatabaseController.main();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1,capacity);
-            stmt.setInt(2,state);
-            stmt.setInt(3, numMesa);
-            int rowsInserted = stmt.executeUpdate();
-            return rowsInserted > 0;
-        }
-        catch (SQLException e) {
-            System.err.println("Error al crear la mesa: " + e.getMessage());
+            stmt.setInt(1, numMesa);
+            stmt.setInt(2, capacity);
+            stmt.setInt(3, state);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error al añadir la mesa: " + e.getMessage());
             e.printStackTrace();
-            return false;
         }
     }
-    public int countTables(){
+
+    public int countTables() {
         String sql = "SELECT COUNT(*) AS numOfMesa FROM \"mesa\"";
         try (Connection conn = DatabaseController.main();
              PreparedStatement stmt = conn.prepareStatement(sql);
@@ -78,62 +54,26 @@ public class TableDAO {
         }
         return -1;
     }
-    public void manageTables(){
-        Stage manage = new Stage();
-        manage.setTitle("Gestionar mesas" );
-        VBox show = new VBox(10);
-        show.setPadding(new Insets(20));
-        show.setAlignment(Pos.CENTER);
-        Button deleteTable= new Button("Eliminar mesa");
-        Button manageTable= new Button("Gestionar mesas");
-        deleteTable.setOnAction(event-> {
-            manage.close();
-            showTableToDelete();
-        });
-        manageTable.setOnAction(event-> {
-            manage.close();
-            modifyTable();
-        });
-        show.getChildren().addAll(deleteTable, manageTable);
-        Scene add= new Scene(show,300,150);
-        manage.setScene(add);
-        manage.show();
-    }
-    public void modifyTable(){
-        Stage modify= new Stage();
-        modify.setTitle("Gestionar mesas");
-        VBox show = new VBox(10);
-        show.setPadding(new Insets(20));
-        show.setAlignment(Pos.CENTER);
+
+
+    public List<TableVO> modifyTable(){
+        List<TableVO> tables = new ArrayList<TableVO>();
         String sql = "SELECT \"numMesa\",\"capacidad\" FROM \"mesa\" WHERE \"numMesa\"!=0";
         try (Connection conn = DatabaseController.main();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
                 int idTable = rs.getInt("numMesa");
-                int quantity=rs.getInt("capacidad");
-                Button mesaButton = new Button("Mesa " + idTable);
-                mesaButton.setOnAction(event -> {
-                    // Mostrar cuadro de texto para nueva capacidad
-                    TextInputDialog dialog = new TextInputDialog(String.valueOf(quantity));
-                    dialog.setTitle("Modificar Mesa");
-                    dialog.setHeaderText("Modificar capacidad de Mesa " + idTable);
-                    dialog.setContentText("Nueva capacidad:");
-                    Optional<String> result = dialog.showAndWait();
-                    result.ifPresent(newCapacity -> {
-                        modifyCapacityTable(idTable, Integer.parseInt(newCapacity));
-                        modify.close();
-                    });
-                });
-                show.getChildren().add(mesaButton);
+                int quantity = rs.getInt("capacidad");
+                TableVO tableadd=new TableVO(0,quantity,idTable);
+                tables.add(tableadd);
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        Scene add = new Scene(show, 400, 300);
-        modify.setScene(add);
-        modify.show();
+        return tables;
     }
+
     public void modifyStateTable(int num){
         String sql = "UPDATE \"mesa\" SET \"estado\" = ? WHERE \"idMesa\" = ?";
         try (Connection conn = DatabaseController.main();
@@ -167,6 +107,7 @@ public class TableDAO {
             e.printStackTrace();
         }
     }
+
     public int showState(int state){
         String sql = "SELECT \"numMesa\" FROM \"mesa\"WHERE \"state\" = ?";
         try (Connection conn = DatabaseController.main();
@@ -183,53 +124,39 @@ public class TableDAO {
         return -1;
     }
     //Muestra botones uno para cada mesa
-    public void showTableToDelete(){
-        Stage delete= new Stage();
-        delete.setTitle("Eliminar Mesa");
-        VBox show= new VBox(10);
-        show.setPadding(new Insets(20));
-        show.setAlignment(Pos.CENTER);
-        List<Button> tableButtons = new ArrayList<>();
+    public  List<Integer> showTableToDelete(){
+        List<Integer> table= new ArrayList<>();
         String sql = "SELECT \"numMesa\" FROM \"mesa\" WHERE \"numMesa\"!=0";
         try (Connection conn = DatabaseController.main();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
                 int idTable = rs.getInt("numMesa");
-                Button tableNumberButton= new Button("Mesa " + idTable);
-                tableButtons.add(tableNumberButton);
-                tableNumberButton.setOnAction(event -> {
-                    Alert confirmDialog = new Alert(Alert.AlertType.CONFIRMATION,"¿Está seguro de que desea eliminar la Mesa " + idTable + "?", ButtonType.YES, ButtonType.NO);
-                    confirmDialog.showAndWait();
-                    if (confirmDialog.getResult() == ButtonType.YES) {
-                        deleteTable(idTable);
-                        delete.close();
-                    }
-                });
-                show.getChildren().add(tableNumberButton);
+                table.add(idTable);
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        Scene scene = new Scene(show, 400, 300);
-        delete.setScene(scene);
-        delete.show();
+        return table;
     }
+
+
     //Elimina la mesa que se ha cliclado
-    public void deleteTable(int idTable){
+    public void deleteTable(int idTable) {
         String sql = "DELETE FROM \"mesa\" WHERE \"numMesa\" = ?";
         try (Connection conn = DatabaseController.main();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, idTable);
             stmt.executeUpdate();
-            // Renumerar mesas
             renumberTable();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
+
+
     //Una vez eliminadas las mesas las vuelve a numerar del 1 al 10
-    public void renumberTable(){
+    private void renumberTable() {
         String selectSql = "SELECT \"numMesa\" FROM \"mesa\" WHERE \"numMesa\" != 0 ORDER BY \"numMesa\"";
         String updateSql = "UPDATE \"mesa\" SET \"numMesa\" = ? WHERE \"numMesa\" = ?";
         try (Connection conn = DatabaseController.main();
@@ -248,16 +175,16 @@ public class TableDAO {
             e.printStackTrace();
         }
     }
-    public int getTableIdByNum(int num){
-        String sql = "SELECT \"idMesa\" FROM \"mesa\" WHERE \"numMesa\" = ?";
 
+
+    public int getTableIdByNum(int num) {
+        String sql = "SELECT \"idMesa\" FROM \"mesa\" WHERE \"numMesa\" = ?";
         try (Connection conn = DatabaseController.main();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1,num);
-
+            stmt.setInt(1, num);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getInt("idMesa"); // Devuelve el iduser encontrado
+                    return rs.getInt("idMesa");
                 }
             }
         } catch (SQLException e) {
@@ -266,16 +193,16 @@ public class TableDAO {
         }
         return -1;
     }
-    public int getState(int id){
-        String sql= "SELECT \"estado\" FROM \"mesa\" WHERE \"idMesa\" = ?";
 
+
+    public int getState(int id) {
+        String sql = "SELECT \"estado\" FROM \"mesa\" WHERE \"idMesa\" = ?";
         try (Connection conn = DatabaseController.main();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1,id);
-
+            stmt.setInt(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getInt("estado"); // Devuelve el iduser encontrado
+                    return rs.getInt("estado");
                 }
             }
         } catch (SQLException e) {
@@ -283,7 +210,7 @@ public class TableDAO {
             e.printStackTrace();
         }
         return -1;
-
     }
+
 
 }

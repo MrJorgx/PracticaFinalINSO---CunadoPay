@@ -1,4 +1,4 @@
-package models;
+package models.VO;
 
 public class StockVO {
     private String productName;

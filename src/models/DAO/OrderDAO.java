@@ -1,32 +1,29 @@
-package dao;
+package models.DAO;
 
-import controllers.DatabaseController;
-import javafx.collections.FXCollections;
+import controllers.*;
 import javafx.collections.ObservableList;
-import models.OrderVO;
-import models.ProductVO;
-import models.StockVO;
+import models.VO.OrderVO;
+import models.VO.ProductVO;
+import models.VO.StockVO;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class OrderDAO {
-    ProductDAO productdao;
-    StockDAO stockdao;
-    TableDAO tabledao;
+    ProductController productController;
+    StockController stockController;
+    TableController tableController     = new TableController();
 
-    public OrderDAO(){
-        this.tabledao= new TableDAO();
-        this.productdao= new ProductDAO(this);
-        this.stockdao=new StockDAO(this);
+    public OrderDAO(BossController boss){
+        this.stockController= new StockController(boss);
+        this.productController= new ProductController(boss);
     }
-
-
+    public OrderDAO(InventoryController inventoryController){
+        this.stockController= new StockController(inventoryController);
+        this.productController= new ProductController(inventoryController);
+    }
     public boolean addOrderToTable(int numMesa, float price, String date, int state, int idUser){
         String sql = "INSERT INTO \"pedido\" ( \"precioTotal\", \"fecha\", \"numMesa\", \"estado\", \"idUser\") VALUES (?,?,?,?,?)";
         try (Connection conn = DatabaseController.main();
@@ -38,7 +35,7 @@ public class OrderDAO {
             stmt.setInt(5, idUser);
 
             int rowsInserted = stmt.executeUpdate();
-            tabledao.modifyStateTable(numMesa);
+            tableController.modifyStateTable(numMesa);
             return rowsInserted > 0; // Devuelve true si se inserta correctamente
 
         } catch (SQLException e) {
@@ -59,7 +56,7 @@ public class OrderDAO {
             stmt.setInt(5, order.getIdWorker());
 
             int rowsInserted = stmt.executeUpdate();
-            tabledao.modifyStateTableToFree(order.getNumberTable());
+            tableController.modifyStateTableToFree(order.getNumberTable());
             return rowsInserted > 0; // Devuelve true si se inserta correctamente
 
         } catch (SQLException e) {
@@ -70,11 +67,9 @@ public class OrderDAO {
     }
     public int getOrderIdByFecha(String fecha){
         String sql =  "SELECT \"idPedido\" FROM \"pedido\" WHERE  \"fecha\" = ? ";
-
         try (Connection conn = DatabaseController.main();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, fecha);
-
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     return rs.getInt("idPedido"); // Devuelve el iduser encontrado
@@ -100,7 +95,6 @@ public class OrderDAO {
     }
     public int getOrderIdByName(int estado, float price, String fecha, int numMesa, int idUser){
         String sql =  "SELECT \"idPedido\" FROM \"pedido\" WHERE \"precioTotal\" = ? AND \"fecha\" = ? AND \"numMesa\" = ? AND \"estado\" =? AND \"idUser\" = ?";
-
         try (Connection conn = DatabaseController.main();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setFloat(1, price);
@@ -122,8 +116,8 @@ public class OrderDAO {
     }
     public void realizarVenta(ObservableList<StockVO> productosVenta) {
         for (StockVO producto : productosVenta) {
-            int id=productdao.getProductIdByName(producto.getProductName());
-            stockdao.actualizarStock(id, producto.getQuantity());
+            int id=productController.getProductIdByName(producto.getProductName());
+            stockController.actualizarStock(id, producto.getQuantity());
         }
     }
     public boolean lineaPedido(int idProduct, int cantity, float price, float priceTotal, int idOrder){

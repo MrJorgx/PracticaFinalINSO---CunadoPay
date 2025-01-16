@@ -1,4 +1,4 @@
-package dao;
+package models.DAO;
 
 import controllers.BossController;
 import controllers.InventoryController;
@@ -10,122 +10,39 @@ import javafx.scene.control.Button;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
-import models.ProductVO;
+import models.VO.ProductVO;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ProductDAO {
 
-    private BossController bossController;
-    private InventoryController inventoryController;
-    private TableView<ProductVO> tablaPedido;
-    private HBox typeButtons;
-    private GridPane productPane;
-    private SimpleDoubleProperty total;
-    private SimpleDoubleProperty totalNoIVA;
-    private StockDAO stockdao;
-    private OrderDAO orderdao;
 
-    // Constructor que recibe BossControllerInicializar tablaPedido, buttons product pane de BossController
-    public ProductDAO(BossController bossController) {
-        this.bossController = bossController;
-        this.tablaPedido = bossController.getTablaPedido();
-        this.typeButtons = bossController.getTypeButtons();
-        this.productPane = bossController.getProductPane();
-        this.total = bossController.getTotal();
-        this.totalNoIVA = bossController.getTotalNoIVA();
-    }
-    //Inicializar tablaPedido, buttons product pane de InventoryController
-    public ProductDAO(InventoryController inventoryController){
-        this.inventoryController = inventoryController;
-        this.tablaPedido = inventoryController.getTablaPedido();
-        this.typeButtons = inventoryController.getTypeButtons();
-        this.productPane = inventoryController.getProductPane();
-        this.total = inventoryController.getTotal();
-        this.totalNoIVA = inventoryController.getTotalNoIVA();
-    }
-    public ProductDAO(StockDAO stockdao){
-        this.stockdao=stockdao;
-    }
-    public ProductDAO(OrderDAO orderdao){
-        this.orderdao=orderdao;
-    }
-
-    public void loadCategory(){
-        String[] categoryName  ={"Comidas", "Cafes", "Postres", "Bebidas"};
-        typeButtons.getChildren().clear();
-        for(int i=0; i < categoryName.length; i++){
-            int aux=i;
-            Button categoryButton= new Button(categoryName[i]);
-            categoryButton.setStyle("-fx-min-width: 100px; -fx-background-color: lightgray;");
-            categoryButton.setOnAction(event ->{
-                System.out.println("Categoria cliclada: "+ categoryName[aux]);
-                loadProducts(aux);
-            });
-            typeButtons.getChildren().add(categoryButton);
-            categoryButton.setDisable(false);
-        }
-    }
-    public void loadProducts(int aux){
-        productPane.getChildren().clear();
-        productPane.setVisible(true);
+    public List<ProductVO> loadProducts(int aux){
+        List<ProductVO> productList = new ArrayList<>();
         String sql= "SELECT \"nombre\", \"precio\" FROM \"producto\" WHERE \"tipo\" = ?";
         try (Connection conn = DatabaseController.main();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, aux);
             ResultSet rs = stmt.executeQuery();
-            int row=0;
-            int col=0;
+
             while(rs.next()){
-                String productName=rs.getString("nombre");
-                float productPrice=rs.getFloat("precio");
-                Button productButton= new Button(productName);
-                productButton.setStyle("-fx-min-width: 100px; -fx-min-height: 40px; -fx-background-color: lightblue;");
-                productPane.add(productButton, col, row);
-                productButton.setOnAction(event -> {
-                    addOrder(productName,  productPrice,1);
-                    System.out.println("Producto seleccionado: " + productName);
-                });
-                col++;
-                if (col > 3) { // Cambiar fila después de 4 columnas
-                    col = 0;
-                    row++;
-                }
+                ProductVO pvo = new ProductVO();
+                pvo.setName(rs.getString("nombre"));
+                pvo.setPrice(rs.getFloat("precio"));
+                productList.add(pvo);
+                System.out.println(pvo.toString());
             }
 
         } catch (SQLException e) {
             System.err.println("Error al cargar productos: " + e.getMessage());
         }
-    }
-    public void addOrder(String name, float precio, int cantidad){
-        ProductVO addOrder= new ProductVO(name, cantidad, precio);
-        boolean addBoolean=true;
-        float aux=precio;
-        for(ProductVO add: tablaPedido.getItems()){
-            if(add.getName().equals(addOrder.getName())) {
-                add.setCat(add.getCat()+1);
-
-                add.setPre(add.getPre()+aux);
-                System.out.println("veces clicladas: "+add.getCat());
-                System.out.println("importe total: "+add.getPre());
-                addBoolean = false;
-                break;
-            }
-        }
-        if(addBoolean) {
-            tablaPedido.getItems().add(addOrder);
-        }
-        totalPrice();
-    }
-    public void totalPrice() {
-        double totalA = tablaPedido.getItems().stream().mapToDouble(ProductVO::getPre).sum();
-        total.set(totalA);
-        double aux= totalA/1.21;
-        totalNoIVA.set(aux);
+        return productList;
     }
     //Comprobar si  el producto existe
     public boolean comprobarProduct(String name){
@@ -179,6 +96,7 @@ public class ProductDAO {
         }
         return -1;
     }
+
     public String getProductNameById(int search) {
         String sql = "SELECT \"nombre\" FROM \"producto\" WHERE \"idProducto\" = ?";
         try (Connection conn = DatabaseController.main();
@@ -196,6 +114,7 @@ public class ProductDAO {
         }
         return "";
     }
+
     //Mostrar todos los productos  que existen
     public ObservableList<ProductVO> showAllProducts() {
         ObservableList<ProductVO> productList = FXCollections.observableArrayList();
@@ -215,6 +134,36 @@ public class ProductDAO {
             e.printStackTrace();
             return null;
         }
+    }
+
+    public List<ProductVO> recuperar(int idMesa) {
+        String sql = "SELECT lp.\"idProducto\", lp.\"cantidad\", lp.\"precioUnitario\",  pd.\"idPedido\", pd.\"fecha\" FROM  \"lineaPedido\" lp INNER JOIN \"pedido\" pd ON lp.\"idPedido\" = pd.\"idPedido\" WHERE pd.\"estado\" = 1 AND pd.\"numMesa\" = ?";
+        List<ProductVO> productos = new ArrayList<>();
+        try (Connection conn = DatabaseController.main();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, idMesa);
+            System.out.println(stmt);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    System.out.println("Llegue");
+                    int cantidad = rs.getInt("cantidad");
+                    float precioUnitario = rs.getFloat("precioUnitario");
+                    int idProducto = rs.getInt("idProducto");
+
+
+                    float pricef= cantidad*precioUnitario;
+                    String name= getProductNameById(idProducto);
+                    // Crear un objeto ProductoVO con los datos obtenidos
+                    ProductVO producto = new ProductVO(name, cantidad, precioUnitario, 0);
+                    producto.setPre(pricef);
+                    productos.add(producto);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al recuperar productos por mesa: " + e.getMessage(), e);
+        }
+        return productos;
     }
 
 }

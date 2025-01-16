@@ -1,6 +1,6 @@
 package controllers;
 
-import dao.UserDAO;
+import models.DAO.UserDAO;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -11,17 +11,18 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import models.UserVO;
+import models.VO.UserVO;
 
 import java.io.IOException;
 import java.util.List;
 
 public class MainController {
 
-    private UserDAO userdao= new UserDAO();
+    private UserController userController;
     private static String nameUser;
     @FXML
     public void initialize() {
+         userController= new UserController();
         handlerStart();
     }
     @FXML
@@ -30,12 +31,12 @@ public class MainController {
     public void handlerStart(){
         VBox root = new VBox(10);
         root.setPadding(new Insets(10));
-        List<UserVO> user = userdao.searchUsers();
+        List<UserVO> user = userController.getUsers();
         int aux=0;
         if(user!=null&&!user.isEmpty()){
             for(UserVO userVO:user){
                 Button empleado = new Button(userVO.getName());
-                String color = userdao.generateColor(aux);
+                String color = userController.generateColor(aux);
                 empleado.setStyle("-fx-background-color: " + color + "; -fx-pref-width: 60%;");
                 empleado.setMaxWidth(Double.MAX_VALUE);
                 root.getChildren().add(empleado);

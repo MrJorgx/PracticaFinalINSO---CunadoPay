@@ -11,7 +11,7 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.stage.Stage;
-import models.ProductVO;
+import models.VO.ProductVO;
 
 
 
@@ -29,7 +29,7 @@ public class PopupTableController {
     @FXML
     private TableColumn<ProductVO, Void> acciones;
 
-    private InventoryController inventoryController;
+    private InventoryController inventoryController= new InventoryController();
 
     public void initialize() {
         nombre.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getName()));
